@@ -28,18 +28,22 @@ public class StringFormatterUI extends JFrame {
     
     private JTextArea inputTextArea;
     private JTextArea outputTextArea;
+    private JTextArea logTextArea;
     private JComboBox<String> operationComboBox;
     private JButton executeButton;
     private JButton copyInputButton;
     private JButton pasteInputButton;
     private JButton copyOutputButton;
     private JButton clearInputButton;
+    private JButton swapButton;
     private JTree operationTree;
     private String selectedOperation;
     @SuppressWarnings("FieldCanBeLocal")
     private JSplitPane splitPane;
     @SuppressWarnings("FieldCanBeLocal")
     private JSplitPane mainSplitPane;
+    @SuppressWarnings("FieldCanBeLocal")
+    private JSplitPane verticalSplitPane;
     
     public StringFormatterUI() {
         initializeUI();
@@ -93,6 +97,11 @@ public class StringFormatterUI extends JFrame {
         JScrollPane treeScrollPane = new JScrollPane(operationTree);
         operationPanel.add(treeScrollPane, BorderLayout.CENTER);
         
+        // 创建垂直分割面板（用于分离主内容和日志区域）
+        verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        verticalSplitPane.setResizeWeight(0.8); // 主内容占80%
+        verticalSplitPane.setDividerSize(10); // 设置分割条的大小
+        
         // 创建文本区域面板
         // 使用JSplitPane实现可调整比例的分割面板
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -109,10 +118,12 @@ public class StringFormatterUI extends JFrame {
         pasteInputButton = new JButton("粘贴");
         copyInputButton = new JButton("复制");
         clearInputButton = new JButton("清空");
+        swapButton = new JButton("交换");
         
         inputButtonPanel.add(pasteInputButton);
         inputButtonPanel.add(copyInputButton);
         inputButtonPanel.add(clearInputButton);
+        inputButtonPanel.add(swapButton);
         
         inputTextArea = new JTextArea();
         inputTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -151,15 +162,31 @@ public class StringFormatterUI extends JFrame {
         mainSplitPane.setLeftComponent(operationPanel);
         mainSplitPane.setRightComponent(splitPane);
         
+        // 创建日志面板
+        JPanel logPanel = new JPanel(new BorderLayout());
+        logPanel.setBorder(BorderFactory.createTitledBorder("日志"));
+        logTextArea = new JTextArea();
+        logTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        logTextArea.setEditable(false);
+        JScrollPane logScrollPane = new JScrollPane(logTextArea);
+        logPanel.add(logScrollPane, BorderLayout.CENTER);
+        
+        // 设置垂直分割面板
+        verticalSplitPane.setTopComponent(mainSplitPane);
+        verticalSplitPane.setBottomComponent(logPanel);
+        
         // 添加快捷键支持
         setupKeyboardShortcuts();
         
         // 添加组件到主窗口
         add(topPanel, BorderLayout.NORTH);
-        add(mainSplitPane, BorderLayout.CENTER);
+        add(verticalSplitPane, BorderLayout.CENTER);
         
         // 添加按钮事件监听器
         setupEventListeners();
+        
+        // 初始化日志
+        log("应用程序启动");
     }
     
     private JTree createOperationTree() {
@@ -222,6 +249,7 @@ public class StringFormatterUI extends JFrame {
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 clipboard.setContents(new StringSelection(text), null);
                 showMessage("已复制到剪贴板");
+                log("已复制输入内容到剪贴板");
             }
         });
         
@@ -233,14 +261,19 @@ public class StringFormatterUI extends JFrame {
                 try {
                     String text = (String) contents.getTransferData(DataFlavor.stringFlavor);
                     inputTextArea.setText(text);
+                    log("已从剪贴板粘贴内容到输入区域");
                 } catch (Exception ex) {
                     showMessage("粘贴失败: " + ex.getMessage());
+                    log("粘贴失败: " + ex.getMessage());
                 }
             }
         });
         
         // 清空输入按钮事件
-        clearInputButton.addActionListener(e -> inputTextArea.setText(""));
+        clearInputButton.addActionListener(e -> {
+            inputTextArea.setText("");
+            log("已清空输入区域");
+        });
         
         // 复制输出按钮事件
         copyOutputButton.addActionListener(e -> {
@@ -252,7 +285,17 @@ public class StringFormatterUI extends JFrame {
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 clipboard.setContents(new StringSelection(text), null);
                 showMessage("已复制到剪贴板");
+                log("已复制输出内容到剪贴板");
             }
+        });
+        
+        // 交换输入输出按钮事件
+        swapButton.addActionListener(e -> {
+            String input = inputTextArea.getText();
+            String output = outputTextArea.getText();
+            inputTextArea.setText(output);
+            outputTextArea.setText(input);
+            log("已交换输入和输出内容");
         });
     }
     
@@ -264,6 +307,15 @@ public class StringFormatterUI extends JFrame {
     }
     
     /**
+     * 记录日志
+     */
+    private void log(String message) {
+        String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
+        logTextArea.append("[" + timestamp + "] " + message + "\n");
+        logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
+    }
+    
+    /**
      * 执行按钮事件监听器
      */
     private class ExecuteButtonListener implements ActionListener {
@@ -272,6 +324,7 @@ public class StringFormatterUI extends JFrame {
             String input = inputTextArea.getText();
             if (input.isEmpty()) {
                 JOptionPane.showMessageDialog(StringFormatterUI.this, "请输入要处理的文本", "提示", JOptionPane.WARNING_MESSAGE);
+                log("执行操作失败：输入为空");
                 return;
             }
             
@@ -284,9 +337,13 @@ public class StringFormatterUI extends JFrame {
             if (operationName != null) {
                 Operation operation = OperationFactory.getOperation(operationName);
                 if (operation != null) {
+                    long startTime = System.currentTimeMillis();
                     result = operation.execute(input);
+                    long endTime = System.currentTimeMillis();
+                    log("执行操作: " + operationName + " (耗时: " + (endTime - startTime) + "ms)");
                 } else {
                     result = "不支持的操作: " + operationName;
+                    log("执行操作失败: " + result);
                 }
             }
             outputTextArea.setText(result);
@@ -302,7 +359,7 @@ public class StringFormatterUI extends JFrame {
                 StringFormatterUI frame = new StringFormatterUI();
                 frame.setVisible(true);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "启动应用程序时发生错误", e);
+                Logger.getLogger(StringFormatterUI.class.getName()).log(Level.SEVERE, "启动应用程序时发生错误", e);
             }
         });
     }

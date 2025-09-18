@@ -24,6 +24,8 @@ public class OperationFactory {
             new Base32DecodeOperation(),
             new UnicodeEncodeOperation(),
             new UnicodeDecodeOperation(),
+            new HexEncodeOperation(),
+            new HexDecodeOperation(),
             new Md5HashOperation(),
             new Sha1HashOperation(),
             new Sha256HashOperation()
