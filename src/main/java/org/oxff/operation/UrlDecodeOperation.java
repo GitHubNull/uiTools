@@ -2,7 +2,6 @@ package org.oxff.operation;
 
 import org.oxff.core.OperationCategory;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
