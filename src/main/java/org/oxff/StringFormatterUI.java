@@ -13,8 +13,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class StringFormatterUI extends JFrame {
+    private static final Logger LOGGER = Logger.getLogger(StringFormatterUI.class.getName());
+    
     private JTextArea inputTextArea;
     private JTextArea outputTextArea;
     private JComboBox<String> operationComboBox;
@@ -23,6 +27,7 @@ public class StringFormatterUI extends JFrame {
     private JButton pasteInputButton;
     private JButton copyOutputButton;
     private JButton clearInputButton;
+    @SuppressWarnings("FieldCanBeLocal")
     private JSplitPane splitPane;
     
     // 定义操作类型
@@ -190,9 +195,7 @@ public class StringFormatterUI extends JFrame {
         });
         
         // 清空输入按钮事件
-        clearInputButton.addActionListener(e -> {
-            inputTextArea.setText("");
-        });
+        clearInputButton.addActionListener(e -> inputTextArea.setText(""));
         
         // 复制输出按钮事件
         copyOutputButton.addActionListener(e -> {
@@ -228,41 +231,30 @@ public class StringFormatterUI extends JFrame {
             }
             
             String operation = (String) operationComboBox.getSelectedItem();
-            String result = performOperation(input, operation);
+            String result = null;
+            if (operation != null) {
+                result = performOperation(input, operation);
+            }
             outputTextArea.setText(result);
         }
         
         private String performOperation(String input, String operation) {
-            switch (operation) {
-                case "JSON格式化":
-                    return StringUtils.formatJson(input);
-                case "XML格式化":
-                    return StringUtils.formatXml(input);
-                case "URL编码":
-                    return StringUtils.urlEncode(input);
-                case "URL解码":
-                    return StringUtils.urlDecode(input);
-                case "Base64编码":
-                    return StringUtils.base64Encode(input);
-                case "Base64解码":
-                    return StringUtils.base64Decode(input);
-                case "Base32编码":
-                    return StringUtils.base32Encode(input);
-                case "Base32解码":
-                    return StringUtils.base32Decode(input);
-                case "Unicode编码":
-                    return StringUtils.unicodeEncode(input);
-                case "Unicode解码":
-                    return StringUtils.unicodeDecode(input);
-                case "MD5哈希":
-                    return StringUtils.md5Hash(input);
-                case "SHA1哈希":
-                    return StringUtils.sha1Hash(input);
-                case "SHA256哈希":
-                    return StringUtils.sha256Hash(input);
-                default:
-                    return "不支持的操作: " + operation;
-            }
+            return switch (operation) {
+                case "JSON格式化" -> StringUtils.formatJson(input);
+                case "XML格式化" -> StringUtils.formatXml(input);
+                case "URL编码" -> StringUtils.urlEncode(input);
+                case "URL解码" -> StringUtils.urlDecode(input);
+                case "Base64编码" -> StringUtils.base64Encode(input);
+                case "Base64解码" -> StringUtils.base64Decode(input);
+                case "Base32编码" -> StringUtils.base32Encode(input);
+                case "Base32解码" -> StringUtils.base32Decode(input);
+                case "Unicode编码" -> StringUtils.unicodeEncode(input);
+                case "Unicode解码" -> StringUtils.unicodeDecode(input);
+                case "MD5哈希" -> StringUtils.md5Hash(input);
+                case "SHA1哈希" -> StringUtils.sha1Hash(input);
+                case "SHA256哈希" -> StringUtils.sha256Hash(input);
+                default -> "不支持的操作: " + operation;
+            };
         }
     }
     
@@ -275,7 +267,7 @@ public class StringFormatterUI extends JFrame {
                 StringFormatterUI frame = new StringFormatterUI();
                 frame.setVisible(true);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "启动应用程序时发生错误", e);
             }
         });
     }
