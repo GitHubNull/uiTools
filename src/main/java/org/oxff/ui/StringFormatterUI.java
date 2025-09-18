@@ -23,11 +23,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// 添加RSyntaxTextArea相关导入
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rtextarea.RTextScrollPane;
+
 public class StringFormatterUI extends JFrame {
     private static final Logger LOGGER = Logger.getLogger(StringFormatterUI.class.getName());
     
-    private JTextArea inputTextArea;
-    private JTextArea outputTextArea;
+    private RSyntaxTextArea inputTextArea;
+    private RSyntaxTextArea outputTextArea;
     private JTextArea logTextArea;
     private JComboBox<String> operationComboBox;
     private JButton executeButton;
@@ -36,6 +40,8 @@ public class StringFormatterUI extends JFrame {
     private JButton copyOutputButton;
     private JButton clearInputButton;
     private JButton swapButton;
+    private JButton wrapButton;
+    private JCheckBox wrapCheckBox;
     private JTree operationTree;
     private String selectedOperation;
     @SuppressWarnings("FieldCanBeLocal")
@@ -44,6 +50,7 @@ public class StringFormatterUI extends JFrame {
     private JSplitPane mainSplitPane;
     @SuppressWarnings("FieldCanBeLocal")
     private JSplitPane verticalSplitPane;
+    private boolean isWrap = false;
     
     public StringFormatterUI() {
         initializeUI();
@@ -119,17 +126,23 @@ public class StringFormatterUI extends JFrame {
         copyInputButton = new JButton("复制");
         clearInputButton = new JButton("清空");
         swapButton = new JButton("交换");
+        wrapButton = new JButton("自动换行");
+        wrapCheckBox = new JCheckBox("自动换行");
         
         inputButtonPanel.add(pasteInputButton);
         inputButtonPanel.add(copyInputButton);
         inputButtonPanel.add(clearInputButton);
         inputButtonPanel.add(swapButton);
+        inputButtonPanel.add(wrapCheckBox);
         
-        inputTextArea = new JTextArea();
+        // 使用RSyntaxTextArea替换自定义的LineNumberTextArea
+        inputTextArea = new RSyntaxTextArea();
         inputTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        inputTextArea.setLineWrap(true);
-        inputTextArea.setWrapStyleWord(true);
-        JScrollPane inputScrollPane = new JScrollPane(inputTextArea);
+        inputTextArea.setLineWrap(false);
+        inputTextArea.setCodeFoldingEnabled(true);
+        
+        // 使用RTextScrollPane提供行号显示
+        RTextScrollPane inputScrollPane = new RTextScrollPane(inputTextArea);
         
         inputPanel.add(inputButtonPanel, BorderLayout.NORTH);
         inputPanel.add(inputScrollPane, BorderLayout.CENTER);
@@ -144,12 +157,15 @@ public class StringFormatterUI extends JFrame {
         
         outputButtonPanel.add(copyOutputButton);
         
-        outputTextArea = new JTextArea();
+        // 使用RSyntaxTextArea替换自定义的LineNumberTextArea
+        outputTextArea = new RSyntaxTextArea();
         outputTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        outputTextArea.setLineWrap(true);
-        outputTextArea.setWrapStyleWord(true);
+        outputTextArea.setLineWrap(false);
         outputTextArea.setEditable(false);
-        JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
+        outputTextArea.setCodeFoldingEnabled(true);
+        
+        // 使用RTextScrollPane提供行号显示
+        RTextScrollPane outputScrollPane = new RTextScrollPane(outputTextArea);
         
         outputPanel.add(outputButtonPanel, BorderLayout.NORTH);
         outputPanel.add(outputScrollPane, BorderLayout.CENTER);
@@ -198,7 +214,7 @@ public class StringFormatterUI extends JFrame {
             List<Operation> operations = OperationFactory.getOperationsByCategory(category);
             
             for (Operation operation : operations) {
-                DefaultMutableTreeNode operationNode = new DefaultMutableTreeNode(operation.getDisplayName());
+                DefaultMutableTreeNode operationNode = new DefaultMutableTreeNode(operation);
                 operationNode.setUserObject(operation);
                 categoryNode.add(operationNode);
             }
@@ -208,11 +224,126 @@ public class StringFormatterUI extends JFrame {
         
         return new JTree(new DefaultTreeModel(root));
     }
-    
+
+    /**
+     * 设置事件监听器
+     */
+    private void setupEventListeners() {
+        // 执行按钮事件
+        executeButton.addActionListener(e -> executeOperation());
+
+        // 复制输入按钮事件
+        copyInputButton.addActionListener(e -> {
+            String text = inputTextArea.getText();
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(new StringSelection(text), null);
+            log("已复制输入内容到剪贴板");
+        });
+
+        // 粘贴输入按钮事件
+        pasteInputButton.addActionListener(e -> {
+            try {
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                Transferable contents = clipboard.getContents(null);
+                if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                    String text = (String) contents.getTransferData(DataFlavor.stringFlavor);
+                    inputTextArea.setText(text);
+                    log("已从剪贴板粘贴内容到输入框");
+                }
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "粘贴操作失败", ex);
+                log("粘贴操作失败: " + ex.getMessage());
+            }
+        });
+
+        // 复制输出按钮事件
+        copyOutputButton.addActionListener(e -> {
+            String text = outputTextArea.getText();
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(new StringSelection(text), null);
+            log("已复制输出内容到剪贴板");
+        });
+
+        // 清空输入按钮事件
+        clearInputButton.addActionListener(e -> {
+            inputTextArea.setText("");
+            log("已清空输入内容");
+        });
+
+        // 交换按钮事件
+        swapButton.addActionListener(e -> {
+            String inputText = inputTextArea.getText();
+            String outputText = outputTextArea.getText();
+            inputTextArea.setText(outputText);
+            outputTextArea.setText(inputText);
+            log("已交换输入和输出内容");
+        });
+
+        // 自动换行复选框事件
+        wrapCheckBox.addActionListener(e -> {
+            boolean wrap = wrapCheckBox.isSelected();
+            inputTextArea.setLineWrap(wrap);
+            outputTextArea.setLineWrap(wrap);
+            inputTextArea.setWrapStyleWord(wrap);
+            outputTextArea.setWrapStyleWord(wrap);
+            log(wrap ? "已启用自动换行" : "已禁用自动换行");
+        });
+    }
+
+    /**
+     * 执行选定的操作
+     */
+    private void executeOperation() {
+        String inputText = inputTextArea.getText();
+        if (selectedOperation == null || selectedOperation.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "请选择一个操作", "错误", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (inputText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "请输入要处理的文本", "提示", JOptionPane.WARNING_MESSAGE);
+            log("执行操作失败：输入为空");
+            return;
+        }
+
+        try {
+            Operation operation = OperationFactory.getOperation(selectedOperation);
+            if (operation != null) {
+                long startTime = System.currentTimeMillis();
+                String result = operation.execute(inputText);
+                long endTime = System.currentTimeMillis();
+                outputTextArea.setText(result);
+                log("执行操作: " + selectedOperation + " (耗时: " + (endTime - startTime) + "ms)");
+            } else {
+                JOptionPane.showMessageDialog(this, "未找到操作: " + selectedOperation, "错误", JOptionPane.ERROR_MESSAGE);
+                log("未找到操作: " + selectedOperation);
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "执行操作失败: " + selectedOperation, ex);
+            outputTextArea.setText("执行失败: " + ex.getMessage());
+            log("执行操作失败: " + selectedOperation + " - " + ex.getMessage());
+        }
+    }
+
     /**
      * 设置键盘快捷键
      */
     private void setupKeyboardShortcuts() {
+        // Ctrl+E 执行操作
+        executeButton.setMnemonic(KeyEvent.VK_E);
+
+        // Ctrl+C 复制输入
+        copyInputButton.setMnemonic(KeyEvent.VK_C);
+
+        // Ctrl+V 粘贴输入
+        pasteInputButton.setMnemonic(KeyEvent.VK_V);
+
+        // Ctrl+Shift+C 复制输出
+        copyOutputButton.setMnemonic(KeyEvent.VK_O);
+
+        // Ctrl+Shift+X 清空输入
+        clearInputButton.setMnemonic(KeyEvent.VK_X);
+
         // Ctrl+A 全选输入框
         inputTextArea.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), "selectAll");
         inputTextArea.getActionMap().put("selectAll", new AbstractAction() {
@@ -221,7 +352,7 @@ public class StringFormatterUI extends JFrame {
                 inputTextArea.selectAll();
             }
         });
-        
+
         // Ctrl+A 全选输出框
         outputTextArea.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), "selectAll");
         outputTextArea.getActionMap().put("selectAll", new AbstractAction() {
@@ -231,123 +362,14 @@ public class StringFormatterUI extends JFrame {
             }
         });
     }
-    
-    /**
-     * 设置事件监听器
-     */
-    private void setupEventListeners() {
-        // 执行按钮事件
-        executeButton.addActionListener(new ExecuteButtonListener());
-        
-        // 复制输入按钮事件
-        copyInputButton.addActionListener(e -> {
-            String text = inputTextArea.getSelectedText();
-            if (text == null || text.isEmpty()) {
-                text = inputTextArea.getText();
-            }
-            if (text != null && !text.isEmpty()) {
-                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                clipboard.setContents(new StringSelection(text), null);
-                showMessage("已复制到剪贴板");
-                log("已复制输入内容到剪贴板");
-            }
-        });
-        
-        // 粘贴输入按钮事件
-        pasteInputButton.addActionListener(e -> {
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            Transferable contents = clipboard.getContents(null);
-            if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                try {
-                    String text = (String) contents.getTransferData(DataFlavor.stringFlavor);
-                    inputTextArea.setText(text);
-                    log("已从剪贴板粘贴内容到输入区域");
-                } catch (Exception ex) {
-                    showMessage("粘贴失败: " + ex.getMessage());
-                    log("粘贴失败: " + ex.getMessage());
-                }
-            }
-        });
-        
-        // 清空输入按钮事件
-        clearInputButton.addActionListener(e -> {
-            inputTextArea.setText("");
-            log("已清空输入区域");
-        });
-        
-        // 复制输出按钮事件
-        copyOutputButton.addActionListener(e -> {
-            String text = outputTextArea.getSelectedText();
-            if (text == null || text.isEmpty()) {
-                text = outputTextArea.getText();
-            }
-            if (text != null && !text.isEmpty()) {
-                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                clipboard.setContents(new StringSelection(text), null);
-                showMessage("已复制到剪贴板");
-                log("已复制输出内容到剪贴板");
-            }
-        });
-        
-        // 交换输入输出按钮事件
-        swapButton.addActionListener(e -> {
-            String input = inputTextArea.getText();
-            String output = outputTextArea.getText();
-            inputTextArea.setText(output);
-            outputTextArea.setText(input);
-            log("已交换输入和输出内容");
-        });
-    }
-    
-    /**
-     * 显示消息
-     */
-    private void showMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "提示", JOptionPane.INFORMATION_MESSAGE);
-    }
-    
+
     /**
      * 记录日志
      */
     private void log(String message) {
-        String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
+        String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
         logTextArea.append("[" + timestamp + "] " + message + "\n");
         logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
-    }
-    
-    /**
-     * 执行按钮事件监听器
-     */
-    private class ExecuteButtonListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String input = inputTextArea.getText();
-            if (input.isEmpty()) {
-                JOptionPane.showMessageDialog(StringFormatterUI.this, "请输入要处理的文本", "提示", JOptionPane.WARNING_MESSAGE);
-                log("执行操作失败：输入为空");
-                return;
-            }
-            
-            String operationName = selectedOperation;
-            if (operationName == null) {
-                operationName = (String) operationComboBox.getSelectedItem();
-            }
-            
-            String result = null;
-            if (operationName != null) {
-                Operation operation = OperationFactory.getOperation(operationName);
-                if (operation != null) {
-                    long startTime = System.currentTimeMillis();
-                    result = operation.execute(input);
-                    long endTime = System.currentTimeMillis();
-                    log("执行操作: " + operationName + " (耗时: " + (endTime - startTime) + "ms)");
-                } else {
-                    result = "不支持的操作: " + operationName;
-                    log("执行操作失败: " + result);
-                }
-            }
-            outputTextArea.setText(result);
-        }
     }
     
     public static void main(String[] args) {

@@ -44,6 +44,13 @@
             <artifactId>flatlaf</artifactId>
             <version>3.2.5</version>
         </dependency>
+
+        <!-- 带行号和语法高亮的文本编辑器 -->
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>3.3.3</version>
+        </dependency>
     </dependencies>
 
     <build>
