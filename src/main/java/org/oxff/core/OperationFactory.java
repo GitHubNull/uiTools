@@ -53,11 +53,7 @@ public class OperationFactory {
     public static String[] getAllOperationNames() {
         return operations.keySet().toArray(new String[0]);
     }
-    
-    public static Map<OperationCategory, List<Operation>> getOperationsByCategory() {
-        return Collections.unmodifiableMap(operationsByCategory);
-    }
-    
+
     public static List<Operation> getOperationsByCategory(OperationCategory category) {
         return Collections.unmodifiableList(operationsByCategory.get(category));
     }
