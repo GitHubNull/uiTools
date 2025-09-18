@@ -12,11 +12,7 @@ import java.nio.charset.StandardCharsets;
 public class UrlEncodeOperation implements Operation {
     @Override
     public String execute(String input) {
-        try {
-            return URLEncoder.encode(input, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            return "编码错误: " + e.getMessage();
-        }
+        return URLEncoder.encode(input, StandardCharsets.UTF_8);
     }
     
     @Override
