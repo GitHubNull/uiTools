@@ -27,11 +27,7 @@ jobs:
         run: |
           mvn -B package --file pom.xml
           echo "Build completed. Listing target directory contents:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force target/
-          else
-            ls -la target/
-          fi
+          ls -la target/
 
       - name: Extract release notes
         run: |
@@ -105,11 +101,7 @@ jobs:
             --icon src/main/resources/app-icon.ico || echo "jpackage failed, possibly due to missing icon"
           
           echo "Native package created. Contents:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force native-package/ || echo "native-package directory not found"
-          else
-            ls -la native-package/ || echo "native-package directory not found"
-          fi
+          ls -la native-package/ || echo "native-package directory not found"
 
       - name: List files for upload
         shell: bash
@@ -117,23 +109,11 @@ jobs:
           echo "Current directory:"
           pwd
           echo "Directory contents:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force
-          else
-            ls -la
-          fi
+          ls -la
           echo "Target directory:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force target/ || echo "Target directory not found"
-          else
-            ls -la target/ || echo "Target directory not found"
-          fi
+          ls -la target/ || echo "Target directory not found"
           echo "Native package directory:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force native-package/ || echo "Native package directory not found"
-          else
-            ls -la native-package/ || echo "Native package directory not found"
-          fi
+          ls -la native-package/ || echo "Native package directory not found"
 
       - name: Upload native package artifact
         uses: actions/upload-artifact@v4
@@ -169,11 +149,7 @@ jobs:
         run: |
           echo "Downloaded artifacts structure:"
           find downloaded-artifacts -type f -print || echo "No files found in downloaded-artifacts"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Recurse -Force downloaded-artifacts || echo "Cannot list downloaded-artifacts directory"
-          else
-            ls -laR downloaded-artifacts || echo "Cannot list downloaded-artifacts directory"
-          fi
+          ls -laR downloaded-artifacts || echo "Cannot list downloaded-artifacts directory"
 
       - name: Organize downloaded artifacts
         shell: bash
@@ -188,51 +164,23 @@ jobs:
           
           echo "Organized artifacts:"
           echo "Linux packages:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force linux-package/ || echo "No Linux packages"
-          else
-            ls -la linux-package/ || echo "No Linux packages"
-          fi
+          ls -la linux-package/ || echo "No Linux packages"
           echo "macOS packages:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force macos-package/ || echo "No macOS packages"
-          else
-            ls -la macos-package/ || echo "No macOS packages"
-          fi
+          ls -la macos-package/ || echo "No macOS packages"
           echo "Windows packages:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force windows-package/ || echo "No Windows packages"
-          else
-            ls -la windows-package/ || echo "No Windows packages"
-          fi
+          ls -la windows-package/ || echo "No Windows packages"
 
       - name: List all files for release
         shell: bash
         run: |
           echo "JAR files:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force *.jar || echo "No JAR files in root"
-          else
-            ls -la *.jar || echo "No JAR files in root"
-          fi
+          ls -la *.jar || echo "No JAR files in root"
           echo "Linux packages:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force linux-package/ || echo "No Linux packages"
-          else
-            ls -la linux-package/ || echo "No Linux packages"
-          fi
+          ls -la linux-package/ || echo "No Linux packages"
           echo "macOS packages:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force macos-package/ || echo "No macOS packages"
-          else
-            ls -la macos-package/ || echo "No macOS packages"
-          fi
+          ls -la macos-package/ || echo "No macOS packages"
           echo "Windows packages:"
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            Get-ChildItem -Force windows-package/ || echo "No Windows packages"
-          else
-            ls -la windows-package/ || echo "No Windows packages"
-          fi
+          ls -la windows-package/ || echo "No Windows packages"
 
       - name: Extract release notes
         run: |
