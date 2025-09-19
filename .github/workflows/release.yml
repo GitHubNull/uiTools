@@ -23,6 +23,7 @@ jobs:
           cache: maven
 
       - name: Build with Maven
+        shell: bash
         run: |
           mvn -B package --file pom.xml
           echo "Build completed. Listing target directory contents:"
@@ -111,6 +112,7 @@ jobs:
           fi
 
       - name: List files for upload
+        shell: bash
         run: |
           echo "Current directory:"
           pwd
@@ -163,6 +165,7 @@ jobs:
           path: downloaded-artifacts
 
       - name: Debug downloaded artifacts
+        shell: bash
         run: |
           echo "Downloaded artifacts structure:"
           find downloaded-artifacts -type f -print || echo "No files found in downloaded-artifacts"
@@ -173,6 +176,7 @@ jobs:
           fi
 
       - name: Organize downloaded artifacts
+        shell: bash
         run: |
           # Create directories for each platform
           mkdir -p linux-package macos-package windows-package
@@ -203,6 +207,7 @@ jobs:
           fi
 
       - name: List all files for release
+        shell: bash
         run: |
           echo "JAR files:"
           if [[ "$RUNNER_OS" == "Windows" ]]; then
