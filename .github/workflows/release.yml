@@ -90,6 +90,13 @@ jobs:
           echo "Creating package for $RUNNER_OS with type $PACKAGE_TYPE"
           
           # Use jpackage to create native installer
+          # Select appropriate icon based on platform
+          if [[ "$RUNNER_OS" == "Linux" ]] || [[ "$RUNNER_OS" == "Windows" ]]; then
+            ICON_FILE="src/main/resources/Tools.ico"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            ICON_FILE="src/main/resources/Tools.icns"
+          fi
+          
           jpackage \
             --input target \
             --name "$APP_NAME" \
@@ -98,7 +105,7 @@ jobs:
             --main-jar $(basename target/uiTools-*.jar) \
             --type "$PACKAGE_TYPE" \
             --dest native-package \
-            --icon src/main/resources/app-icon.ico || echo "jpackage failed, possibly due to missing icon"
+            --icon "$ICON_FILE" || echo "jpackage failed, possibly due to missing icon"
           
           # Check if package was created
           echo "Native package creation result:"
@@ -120,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: native-package-${{ runner.OS }}
+          name: native-package-${{ runner.os }}
           path: native-package/**
           if-no-files-found: ignore
 
@@ -143,17 +150,17 @@ jobs:
       - name: Download Linux native package
         uses: actions/download-artifact@v4
         with:
-          name: native-package-Linux
+          name: native-package-linux
           path: downloaded-artifacts/native-package-Linux
       - name: Download macOS native package
         uses: actions/download-artifact@v4
         with:
-          name: native-package-macOS
+          name: native-package-macos
           path: downloaded-artifacts/native-package-macOS
       - name: Download Windows native package
         uses: actions/download-artifact@v4
         with:
-          name: native-package-Windows
+          name: native-package-windows
           path: downloaded-artifacts/native-package-Windows
 
       - name: Debug downloaded artifacts
