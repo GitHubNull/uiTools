@@ -113,7 +113,7 @@ jobs:
           echo "Target directory:"
           ls -la target/ || echo "Target directory not found"
           echo "Native package directory:"
-          ls -la native-package/ || echo "Native package directory not found"
+          ls -la native-package/ || echo "native-package directory not found"
 
       - name: Upload native package artifact
         uses: actions/upload-artifact@v4
