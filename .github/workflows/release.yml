@@ -45,7 +45,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-22.04, macos-13, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -60,7 +60,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Set up dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y rpm
@@ -86,6 +86,8 @@ jobs:
             APP_NAME="uiTools"
           fi
           
+          echo "Creating package for $RUNNER_OS with type $PACKAGE_TYPE"
+          
           # Use jpackage to create native installer
           jpackage \
             --input target \
@@ -98,13 +100,26 @@ jobs:
             --icon src/main/resources/app-icon.ico || echo "jpackage failed, possibly due to missing icon"
           
           echo "Native package created. Contents:"
-          ls -la native-package/
+          ls -la native-package/ || echo "native-package directory not found"
+
+      - name: List files for upload
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Directory contents:"
+          ls -la
+          echo "Target directory:"
+          ls -la target/ || echo "Target directory not found"
+          echo "Native package directory:"
+          ls -la native-package/ || echo "Native package directory not found"
 
       - name: Upload native package artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: native-package-${{ runner.os }}
-          path: native-package/*
+          path: native-package/**
+          if-no-files-found: ignore
 
   release:
     needs: [build, build-native-packages]
@@ -122,36 +137,45 @@ jobs:
         with:
           name: uiTools-jar
 
-      - name: Download Linux native package
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: native-package-Linux
-          path: linux-package
+          path: downloaded-artifacts
 
-      - name: Download macOS native package
-        uses: actions/download-artifact@v4
-        with:
-          name: native-package-macOS
-          path: macos-package
-
-      - name: Download Windows native package
-        uses: actions/download-artifact@v4
-        with:
-          name: native-package-Windows
-          path: windows-package
-
-      - name: List downloaded files
+      - name: Debug downloaded artifacts
         run: |
-          echo "Listing current directory contents:"
-          ls -la
-          echo "Checking for JAR files:"
-          ls -la *.jar
+          echo "Downloaded artifacts structure:"
+          find downloaded-artifacts -type f -print || echo "No files found in downloaded-artifacts"
+          ls -laR downloaded-artifacts || echo "Cannot list downloaded-artifacts directory"
+
+      - name: Organize downloaded artifacts
+        run: |
+          # Create directories for each platform
+          mkdir -p linux-package macos-package windows-package
+          
+          # Find and move artifacts
+          find downloaded-artifacts -name "*.deb" -exec mv {} linux-package/ \; 2>/dev/null || echo "No .deb files found"
+          find downloaded-artifacts -name "*.dmg" -exec mv {} macos-package/ \; 2>/dev/null || echo "No .dmg files found"
+          find downloaded-artifacts -name "*.exe" -exec mv {} windows-package/ \; 2>/dev/null || echo "No .exe files found"
+          
+          echo "Organized artifacts:"
           echo "Linux packages:"
-          ls -la linux-package/ || echo "No Linux packages found"
+          ls -la linux-package/ || echo "No Linux packages"
           echo "macOS packages:"
-          ls -la macos-package/ || echo "No macOS packages found"
+          ls -la macos-package/ || echo "No macOS packages"
           echo "Windows packages:"
-          ls -la windows-package/ || echo "No Windows packages found"
+          ls -la windows-package/ || echo "No Windows packages"
+
+      - name: List all files for release
+        run: |
+          echo "JAR files:"
+          ls -la *.jar || echo "No JAR files in root"
+          echo "Linux packages:"
+          ls -la linux-package/ || echo "No Linux packages"
+          echo "macOS packages:"
+          ls -la macos-package/ || echo "No macOS packages"
+          echo "Windows packages:"
+          ls -la windows-package/ || echo "No Windows packages"
 
       - name: Extract release notes
         run: |
@@ -161,36 +185,60 @@ jobs:
 
       - name: Create Release
         run: |
-          echo "Creating release with the following files:"
-          ls -la *.jar
-          ls -la linux-package/* || echo "No Linux packages to upload"
-          ls -la macos-package/* || echo "No macOS packages to upload"
-          ls -la windows-package/* || echo "No Windows packages to upload"
+          # Find JAR file
+          JAR_FILE=$(find . -maxdepth 1 -name "uiTools-*.jar" | head -n 1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "ERROR: No JAR file found"
+            exit 1
+          fi
           
-          JAR_FILE=$(ls uiTools-*.jar | head -n 1)
           echo "Using JAR file: $JAR_FILE"
           
           # Create an array to hold all assets
           assets=("$JAR_FILE#uiTools-${{ github.ref_name }}.jar")
           
           # Add native packages if they exist
-          if ls linux-package/* 1> /dev/null 2>&1; then
-            assets+=("linux-package/*#uiTools-${{ github.ref_name }}-linux.deb")
+          LINUX_FILE=$(find linux-package -name "*.deb" -type f 2>/dev/null | head -n 1)
+          if [ -n "$LINUX_FILE" ]; then
+            assets+=("$LINUX_FILE#uiTools-${{ github.ref_name }}-linux.deb")
+            echo "Adding Linux package: $LINUX_FILE"
+          else
+            echo "No Linux package found"
           fi
           
-          if ls macos-package/* 1> /dev/null 2>&1; then
-            assets+=("macos-package/*#uiTools-${{ github.ref_name }}-macos.dmg")
+          MACOS_FILE=$(find macos-package -name "*.dmg" -type f 2>/dev/null | head -n 1)
+          if [ -n "$MACOS_FILE" ]; then
+            assets+=("$MACOS_FILE#uiTools-${{ github.ref_name }}-macos.dmg")
+            echo "Adding macOS package: $MACOS_FILE"
+          else
+            echo "No macOS package found"
           fi
           
-          if ls windows-package/* 1> /dev/null 2>&1; then
-            assets+=("windows-package/*#uiTools-${{ github.ref_name }}-windows.exe")
+          WINDOWS_FILE=$(find windows-package -name "*.exe" -type f 2>/dev/null | head -n 1)
+          if [ -n "$WINDOWS_FILE" ]; then
+            assets+=("$WINDOWS_FILE#uiTools-${{ github.ref_name }}-windows.exe")
+            echo "Adding Windows package: $WINDOWS_FILE"
+          else
+            echo "No Windows package found"
           fi
           
-          # Create release with all assets
-          gh release create ${{ github.ref_name }} \
-            --title "Release ${{ github.ref_name }}" \
-            --notes-file RELEASE_NOTES.md \
-            ${{ contains(github.ref, '-') && '--prerelease' || '' }} \
-            "${assets[@]}"
+          echo "All assets to be uploaded:"
+          printf '%s\n' "${assets[@]}"
+          
+          # Create release with all assets that exist
+          if [ ${#assets[@]} -gt 1 ]; then
+            gh release create ${{ github.ref_name }} \
+              --title "Release ${{ github.ref_name }}" \
+              --notes-file RELEASE_NOTES.md \
+              ${{ contains(github.ref, '-') && '--prerelease' || '' }} \
+              "${assets[@]}"
+          else
+            echo "Only JAR file found, creating release with JAR only"
+            gh release create ${{ github.ref_name }} \
+              --title "Release ${{ github.ref_name }}" \
+              --notes-file RELEASE_NOTES.md \
+              ${{ contains(github.ref, '-') && '--prerelease' || '' }} \
+              "$JAR_FILE#uiTools-${{ github.ref_name }}.jar"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
