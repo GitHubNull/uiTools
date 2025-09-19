@@ -26,7 +26,11 @@ jobs:
         run: |
           mvn -B package --file pom.xml
           echo "Build completed. Listing target directory contents:"
-          ls -la target/
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force target/
+          else
+            ls -la target/
+          fi
 
       - name: Extract release notes
         run: |
@@ -100,18 +104,34 @@ jobs:
             --icon src/main/resources/app-icon.ico || echo "jpackage failed, possibly due to missing icon"
           
           echo "Native package created. Contents:"
-          ls -la native-package/ || echo "native-package directory not found"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force native-package/ || echo "native-package directory not found"
+          else
+            ls -la native-package/ || echo "native-package directory not found"
+          fi
 
       - name: List files for upload
         run: |
           echo "Current directory:"
           pwd
           echo "Directory contents:"
-          ls -la
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force
+          else
+            ls -la
+          fi
           echo "Target directory:"
-          ls -la target/ || echo "Target directory not found"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force target/ || echo "Target directory not found"
+          else
+            ls -la target/ || echo "Target directory not found"
+          fi
           echo "Native package directory:"
-          ls -la native-package/ || echo "Native package directory not found"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force native-package/ || echo "Native package directory not found"
+          else
+            ls -la native-package/ || echo "Native package directory not found"
+          fi
 
       - name: Upload native package artifact
         uses: actions/upload-artifact@v4
@@ -146,7 +166,11 @@ jobs:
         run: |
           echo "Downloaded artifacts structure:"
           find downloaded-artifacts -type f -print || echo "No files found in downloaded-artifacts"
-          ls -laR downloaded-artifacts || echo "Cannot list downloaded-artifacts directory"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Recurse -Force downloaded-artifacts || echo "Cannot list downloaded-artifacts directory"
+          else
+            ls -laR downloaded-artifacts || echo "Cannot list downloaded-artifacts directory"
+          fi
 
       - name: Organize downloaded artifacts
         run: |
@@ -160,22 +184,50 @@ jobs:
           
           echo "Organized artifacts:"
           echo "Linux packages:"
-          ls -la linux-package/ || echo "No Linux packages"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force linux-package/ || echo "No Linux packages"
+          else
+            ls -la linux-package/ || echo "No Linux packages"
+          fi
           echo "macOS packages:"
-          ls -la macos-package/ || echo "No macOS packages"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force macos-package/ || echo "No macOS packages"
+          else
+            ls -la macos-package/ || echo "No macOS packages"
+          fi
           echo "Windows packages:"
-          ls -la windows-package/ || echo "No Windows packages"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force windows-package/ || echo "No Windows packages"
+          else
+            ls -la windows-package/ || echo "No Windows packages"
+          fi
 
       - name: List all files for release
         run: |
           echo "JAR files:"
-          ls -la *.jar || echo "No JAR files in root"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force *.jar || echo "No JAR files in root"
+          else
+            ls -la *.jar || echo "No JAR files in root"
+          fi
           echo "Linux packages:"
-          ls -la linux-package/ || echo "No Linux packages"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force linux-package/ || echo "No Linux packages"
+          else
+            ls -la linux-package/ || echo "No Linux packages"
+          fi
           echo "macOS packages:"
-          ls -la macos-package/ || echo "No macOS packages"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force macos-package/ || echo "No macOS packages"
+          else
+            ls -la macos-package/ || echo "No macOS packages"
+          fi
           echo "Windows packages:"
-          ls -la windows-package/ || echo "No Windows packages"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            Get-ChildItem -Force windows-package/ || echo "No Windows packages"
+          else
+            ls -la windows-package/ || echo "No Windows packages"
+          fi
 
       - name: Extract release notes
         run: |

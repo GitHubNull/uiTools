@@ -214,7 +214,7 @@ public class StringFormatterUI extends JFrame {
             List<Operation> operations = OperationFactory.getOperationsByCategory(category);
             
             for (Operation operation : operations) {
-                DefaultMutableTreeNode operationNode = new DefaultMutableTreeNode(operation);
+                DefaultMutableTreeNode operationNode = new DefaultMutableTreeNode(operation.getDisplayName());
                 operationNode.setUserObject(operation);
                 categoryNode.add(operationNode);
             }
@@ -222,7 +222,9 @@ public class StringFormatterUI extends JFrame {
             root.add(categoryNode);
         }
         
-        return new JTree(new DefaultTreeModel(root));
+        JTree tree = new JTree(new DefaultTreeModel(root));
+        tree.setCellRenderer(new OperationTreeCellRenderer());
+        return tree;
     }
 
     /**
