@@ -41,8 +41,73 @@ jobs:
           path: target/uiTools-*.jar
           if-no-files-found: error
 
-  release:
+  build-native-packages:
     needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      - name: Build with Maven and create native package
+        shell: bash
+        run: |
+          # Build the project
+          mvn -B package --file pom.xml
+          
+          # Create a directory for jpackage output
+          mkdir -p native-package
+          
+          # Get the OS-specific package type and app name
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            PACKAGE_TYPE="deb"
+            APP_NAME="uiTools"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            PACKAGE_TYPE="dmg"
+            APP_NAME="uiTools"
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            PACKAGE_TYPE="exe"
+            APP_NAME="uiTools"
+          fi
+          
+          # Use jpackage to create native installer
+          jpackage \
+            --input target \
+            --name "$APP_NAME" \
+            --app-version "${GITHUB_REF_NAME#v}" \
+            --main-class org.oxff.Main \
+            --main-jar $(basename target/uiTools-*.jar) \
+            --type "$PACKAGE_TYPE" \
+            --dest native-package \
+            --icon src/main/resources/app-icon.ico || echo "jpackage failed, possibly due to missing icon"
+          
+          echo "Native package created. Contents:"
+          ls -la native-package/
+
+      - name: Upload native package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-package-${{ runner.os }}
+          path: native-package/*
+
+  release:
+    needs: [build, build-native-packages]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -57,12 +122,36 @@ jobs:
         with:
           name: uiTools-jar
 
+      - name: Download Linux native package
+        uses: actions/download-artifact@v4
+        with:
+          name: native-package-Linux
+          path: linux-package
+
+      - name: Download macOS native package
+        uses: actions/download-artifact@v4
+        with:
+          name: native-package-macOS
+          path: macos-package
+
+      - name: Download Windows native package
+        uses: actions/download-artifact@v4
+        with:
+          name: native-package-Windows
+          path: windows-package
+
       - name: List downloaded files
         run: |
           echo "Listing current directory contents:"
           ls -la
           echo "Checking for JAR files:"
           ls -la *.jar
+          echo "Linux packages:"
+          ls -la linux-package/ || echo "No Linux packages found"
+          echo "macOS packages:"
+          ls -la macos-package/ || echo "No macOS packages found"
+          echo "Windows packages:"
+          ls -la windows-package/ || echo "No Windows packages found"
 
       - name: Extract release notes
         run: |
@@ -72,14 +161,36 @@ jobs:
 
       - name: Create Release
         run: |
-          echo "Creating release with the following JAR files:"
+          echo "Creating release with the following files:"
           ls -la *.jar
+          ls -la linux-package/* || echo "No Linux packages to upload"
+          ls -la macos-package/* || echo "No macOS packages to upload"
+          ls -la windows-package/* || echo "No Windows packages to upload"
+          
           JAR_FILE=$(ls uiTools-*.jar | head -n 1)
           echo "Using JAR file: $JAR_FILE"
+          
+          # Create an array to hold all assets
+          assets=("$JAR_FILE#uiTools-${{ github.ref_name }}.jar")
+          
+          # Add native packages if they exist
+          if ls linux-package/* 1> /dev/null 2>&1; then
+            assets+=("linux-package/*#uiTools-${{ github.ref_name }}-linux.deb")
+          fi
+          
+          if ls macos-package/* 1> /dev/null 2>&1; then
+            assets+=("macos-package/*#uiTools-${{ github.ref_name }}-macos.dmg")
+          fi
+          
+          if ls windows-package/* 1> /dev/null 2>&1; then
+            assets+=("windows-package/*#uiTools-${{ github.ref_name }}-windows.exe")
+          fi
+          
+          # Create release with all assets
           gh release create ${{ github.ref_name }} \
             --title "Release ${{ github.ref_name }}" \
             --notes-file RELEASE_NOTES.md \
             ${{ contains(github.ref, '-') && '--prerelease' || '' }} \
-            $JAR_FILE#uiTools-${{ github.ref_name }}.jar
+            "${assets[@]}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
