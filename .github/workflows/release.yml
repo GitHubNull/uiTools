@@ -140,24 +140,21 @@ jobs:
         with:
           name: uiTools-jar
 
-      - name: Download all native package artifacts
+      - name: Download Linux native package
         uses: actions/download-artifact@v4
         with:
-          path: downloaded-artifacts
-          name: native-package-linux
-          if-no-files-found: ignore
+          name: native-package-Linux
+          path: downloaded-artifacts/native-package-Linux
       - name: Download macOS native package
         uses: actions/download-artifact@v4
         with:
-          path: downloaded-artifacts
-          name: native-package-macos
-          if-no-files-found: ignore
+          name: native-package-macOS
+          path: downloaded-artifacts/native-package-macOS
       - name: Download Windows native package
         uses: actions/download-artifact@v4
         with:
-          path: downloaded-artifacts
-          name: native-package-windows
-          if-no-files-found: ignore
+          name: native-package-Windows
+          path: downloaded-artifacts/native-package-Windows
 
       - name: Debug downloaded artifacts
         shell: bash
