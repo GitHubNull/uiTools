@@ -46,7 +46,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-13, windows-2022]
+        os: [ubuntu-22.04, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -186,11 +186,6 @@ jobs:
         with:
           name: native-package-macos-13
           path: downloaded-artifacts/native-package-macOS
-      - name: Download Windows native package
-        uses: actions/download-artifact@v4
-        with:
-          name: native-package-windows-2022
-          path: downloaded-artifacts/native-package-Windows
 
       - name: Debug downloaded artifacts
         shell: bash
@@ -203,20 +198,19 @@ jobs:
         shell: bash
         run: |
           # Create directories for each platform
-          mkdir -p linux-package macos-package windows-package
-          
+          mkdir -p linux-package macos-package
+
           # Find and move artifacts
           find downloaded-artifacts -name "*.deb" -exec mv {} linux-package/ \; 2>/dev/null || echo "No .deb files found"
           find downloaded-artifacts -name "*.dmg" -exec mv {} macos-package/ \; 2>/dev/null || echo "No .dmg files found"
-          find downloaded-artifacts -name "*.exe" -exec mv {} windows-package/ \; 2>/dev/null || echo "No .exe files found"
-          
+
           echo "Organized artifacts:"
           echo "Linux packages:"
           ls -la linux-package/ || echo "No Linux packages"
           echo "macOS packages:"
           ls -la macos-package/ || echo "No macOS packages"
-          echo "Windows packages:"
-          ls -la windows-package/ || echo "No Windows packages"
+          echo "Windows packages: temporarily disabled"
+          echo "Note: Windows builds temporarily disabled due to jpackage dependency issues"
 
       - name: List all files for release
         shell: bash
@@ -227,8 +221,7 @@ jobs:
           ls -la linux-package/ || echo "No Linux packages"
           echo "macOS packages:"
           ls -la macos-package/ || echo "No macOS packages"
-          echo "Windows packages:"
-          ls -la windows-package/ || echo "No Windows packages"
+          echo "Windows packages: temporarily disabled"
 
       - name: Extract release notes
         run: |
@@ -266,14 +259,8 @@ jobs:
           else
             echo "No macOS package found"
           fi
-          
-          WINDOWS_FILE=$(find windows-package -name "*.exe" -type f 2>/dev/null | head -n 1)
-          if [ -n "$WINDOWS_FILE" ]; then
-            assets+=("$WINDOWS_FILE#uiTools-${{ github.ref_name }}-windows.exe")
-            echo "Adding Windows package: $WINDOWS_FILE"
-          else
-            echo "No Windows package found"
-          fi
+
+          echo "Windows packages temporarily disabled due to jpackage dependency issues"
           
           echo "All assets to be uploaded:"
           printf '%s\n' "${assets[@]}"
