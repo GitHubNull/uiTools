@@ -150,17 +150,17 @@ jobs:
       - name: Download Linux native package
         uses: actions/download-artifact@v4
         with:
-          name: native-package-Ubuntu-22.04
+          name: native-package-ubuntu-22.04
           path: downloaded-artifacts/native-package-Linux
       - name: Download macOS native package
         uses: actions/download-artifact@v4
         with:
-          name: native-package-MacOS-13
+          name: native-package-macos-13
           path: downloaded-artifacts/native-package-macOS
       - name: Download Windows native package
         uses: actions/download-artifact@v4
         with:
-          name: native-package-Windows-2022
+          name: native-package-windows-2022
           path: downloaded-artifacts/native-package-Windows
 
       - name: Debug downloaded artifacts
