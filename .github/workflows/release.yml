@@ -127,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: native-package-${{ runner.os }}
+          name: native-package-${{ matrix.os }}
           path: native-package/**
           if-no-files-found: ignore
 
