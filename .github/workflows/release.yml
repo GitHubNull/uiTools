@@ -71,10 +71,10 @@ jobs:
         run: |
           # Build the project
           mvn -B package --file pom.xml
-          
+
           # Create a directory for jpackage output
           mkdir -p native-package
-          
+
           # Get the OS-specific package type and app name
           if [[ "$RUNNER_OS" == "Linux" ]]; then
             PACKAGE_TYPE="deb"
@@ -86,9 +86,27 @@ jobs:
             PACKAGE_TYPE="exe"
             APP_NAME="uiTools"
           fi
-          
+
           echo "Creating package for $RUNNER_OS with type $PACKAGE_TYPE"
-          
+          echo "Tag version: ${GITHUB_REF_NAME#v}"
+
+          # List JAR files to verify what we have
+          echo "Available JAR files:"
+          ls -la target/uiTools-*.jar || echo "No JAR files found with uiTools-*.jar pattern"
+
+          # Find the actual JAR file more reliably
+          JAR_FILE=$(find target -name "uiTools-*.jar" -type f | head -n 1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "ERROR: No JAR file found in target directory"
+            echo "Directory contents:"
+            ls -la target/
+            exit 1
+          fi
+
+          echo "Using JAR file: $JAR_FILE"
+          echo "JAR file details:"
+          ls -la "$JAR_FILE"
+
           # Use jpackage to create native installer
           # Select appropriate icon based on platform
           if [[ "$RUNNER_OS" == "Linux" ]] || [[ "$RUNNER_OS" == "Windows" ]]; then
@@ -96,16 +114,27 @@ jobs:
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             ICON_FILE="src/main/resources/Tools.icns"
           fi
+
+          # Check if icon file exists
+          if [ ! -f "$ICON_FILE" ]; then
+            echo "WARNING: Icon file not found: $ICON_FILE"
+            echo "Proceeding without icon..."
+            ICON_FILE=""
+          fi
           
-          jpackage \
-            --input target \
-            --name "$APP_NAME" \
-            --app-version "${GITHUB_REF_NAME#v}" \
-            --main-class org.oxff.Main \
-            --main-jar $(basename target/uiTools-*.jar) \
-            --type "$PACKAGE_TYPE" \
-            --dest native-package \
-            --icon "$ICON_FILE" || echo "jpackage failed, possibly due to missing icon"
+          # Build jpackage command
+          JPACKAGE_CMD="jpackage --input target --name $APP_NAME --app-version ${GITHUB_REF_NAME#v} --main-class org.oxff.Main --main-jar $(basename $JAR_FILE) --type $PACKAGE_TYPE --dest native-package"
+
+          # Add icon if available
+          if [ -n "$ICON_FILE" ] && [ -f "$ICON_FILE" ]; then
+            JPACKAGE_CMD="$JPACKAGE_CMD --icon $ICON_FILE"
+          fi
+
+          echo "Running jpackage command:"
+          echo "$JPACKAGE_CMD"
+
+          # Execute jpackage
+          eval $JPACKAGE_CMD
           
           # Check if package was created
           echo "Native package creation result:"
@@ -129,7 +158,7 @@ jobs:
         with:
           name: native-package-${{ matrix.os }}
           path: native-package/**
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   release:
     needs: [build, build-native-packages]
