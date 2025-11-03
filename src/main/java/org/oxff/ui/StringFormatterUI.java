@@ -32,6 +32,7 @@ public class StringFormatterUI extends JFrame {
     
     private RSyntaxTextArea inputTextArea;
     private RSyntaxTextArea outputTextArea;
+    private RSyntaxTextArea expressionTextArea;
     private JTextArea logTextArea;
     private JComboBox<String> operationComboBox;
     private JButton executeButton;
@@ -39,6 +40,7 @@ public class StringFormatterUI extends JFrame {
     private JButton pasteInputButton;
     private JButton copyOutputButton;
     private JButton clearInputButton;
+    private JButton clearExpressionButton;
     private JButton swapButton;
     private JButton wrapButton;
     private JCheckBox wrapCheckBox;
@@ -46,6 +48,8 @@ public class StringFormatterUI extends JFrame {
     private String selectedOperation;
     @SuppressWarnings("FieldCanBeLocal")
     private JSplitPane splitPane;
+    @SuppressWarnings("FieldCanBeLocal")
+    private JSplitPane expressionSplitPane;
     @SuppressWarnings("FieldCanBeLocal")
     private JSplitPane mainSplitPane;
     @SuppressWarnings("FieldCanBeLocal")
@@ -110,16 +114,16 @@ public class StringFormatterUI extends JFrame {
         verticalSplitPane.setDividerSize(10); // 设置分割条的大小
         
         // 创建文本区域面板
-        // 使用JSplitPane实现可调整比例的分割面板
-        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.5); // 初始比例为1:1
-        splitPane.setDividerLocation(0.5);
-        splitPane.setDividerSize(10); // 设置分割条的大小
-        
+        // 使用垂直分割面板来分离输入、表达式和输出区域
+        expressionSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        expressionSplitPane.setResizeWeight(0.4); // 输入区域占40%
+        expressionSplitPane.setDividerLocation(0.4);
+        expressionSplitPane.setDividerSize(8);
+
         // 输入区域
         JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.setBorder(BorderFactory.createTitledBorder("输入"));
-        
+
         // 输入区域按钮面板
         JPanel inputButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pasteInputButton = new JButton("粘贴");
@@ -128,55 +132,99 @@ public class StringFormatterUI extends JFrame {
         swapButton = new JButton("交换");
         wrapButton = new JButton("自动换行");
         wrapCheckBox = new JCheckBox("自动换行");
-        
+
         inputButtonPanel.add(pasteInputButton);
         inputButtonPanel.add(copyInputButton);
         inputButtonPanel.add(clearInputButton);
         inputButtonPanel.add(swapButton);
         inputButtonPanel.add(wrapCheckBox);
-        
+
         // 使用RSyntaxTextArea替换自定义的LineNumberTextArea
         inputTextArea = new RSyntaxTextArea();
         inputTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         inputTextArea.setLineWrap(false);
         inputTextArea.setCodeFoldingEnabled(true);
-        
+
         // 使用RTextScrollPane提供行号显示
         RTextScrollPane inputScrollPane = new RTextScrollPane(inputTextArea);
-        
+
         inputPanel.add(inputButtonPanel, BorderLayout.NORTH);
         inputPanel.add(inputScrollPane, BorderLayout.CENTER);
-        
+
+        // 表达式输入区域
+        JPanel expressionPanel = new JPanel(new BorderLayout());
+        expressionPanel.setBorder(BorderFactory.createTitledBorder("XPath/JSONPath表达式 (每行一个)"));
+
+        // 表达式区域按钮面板
+        JPanel expressionButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        clearExpressionButton = new JButton("清空表达式");
+        JLabel expressionHint = new JLabel("支持XPath (XML) 和 JSONPath (JSON) 表达式");
+        expressionHint.setFont(expressionHint.getFont().deriveFont(Font.ITALIC, 10f));
+        expressionHint.setForeground(Color.GRAY);
+
+        expressionButtonPanel.add(clearExpressionButton);
+        expressionButtonPanel.add(expressionHint);
+
+        // 表达式输入文本区域
+        expressionTextArea = new RSyntaxTextArea();
+        expressionTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        expressionTextArea.setLineWrap(true);
+        expressionTextArea.setWrapStyleWord(true);
+        expressionTextArea.setCodeFoldingEnabled(false);
+        expressionTextArea.setToolTipText("输入XPath或JSONPath表达式，每行一个表达式\nXML示例: //book/title\nJSON示例: $.store.book[*].title");
+
+        RTextScrollPane expressionScrollPane = new RTextScrollPane(expressionTextArea);
+        expressionScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        expressionScrollPane.setPreferredSize(new Dimension(0, 80)); // 设置初始高度
+
+        expressionPanel.add(expressionButtonPanel, BorderLayout.NORTH);
+        expressionPanel.add(expressionScrollPane, BorderLayout.CENTER);
+
+        // 创建输出区域面板（使用水平分割面板）
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setResizeWeight(0.5); // 初始比例为1:1
+        splitPane.setDividerLocation(0.5);
+        splitPane.setDividerSize(10); // 设置分割条的大小
+
         // 输出区域
         JPanel outputPanel = new JPanel(new BorderLayout());
         outputPanel.setBorder(BorderFactory.createTitledBorder("输出"));
-        
+
         // 输出区域按钮面板
         JPanel outputButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         copyOutputButton = new JButton("复制");
-        
+
         outputButtonPanel.add(copyOutputButton);
-        
+
         // 使用RSyntaxTextArea替换自定义的LineNumberTextArea
         outputTextArea = new RSyntaxTextArea();
         outputTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         outputTextArea.setLineWrap(false);
         outputTextArea.setEditable(false);
         outputTextArea.setCodeFoldingEnabled(true);
-        
+
         // 使用RTextScrollPane提供行号显示
         RTextScrollPane outputScrollPane = new RTextScrollPane(outputTextArea);
-        
+
         outputPanel.add(outputButtonPanel, BorderLayout.NORTH);
         outputPanel.add(outputScrollPane, BorderLayout.CENTER);
-        
-        // 设置分割面板的左右组件
-        splitPane.setLeftComponent(inputPanel);
-        splitPane.setRightComponent(outputPanel);
+
+        // 设置垂直分割面板：上面是输入区域，下面是表达式和输出区域的水平分割
+        JSplitPane outputExpressionSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        outputExpressionSplitPane.setResizeWeight(0.5);
+        outputExpressionSplitPane.setDividerLocation(0.5);
+        outputExpressionSplitPane.setDividerSize(10);
+
+        outputExpressionSplitPane.setLeftComponent(expressionPanel);
+        outputExpressionSplitPane.setRightComponent(outputPanel);
+
+        // 设置expressionSplitPane的组件
+        expressionSplitPane.setTopComponent(inputPanel);
+        expressionSplitPane.setBottomComponent(outputExpressionSplitPane);
         
         // 设置主分割面板
         mainSplitPane.setLeftComponent(operationPanel);
-        mainSplitPane.setRightComponent(splitPane);
+        mainSplitPane.setRightComponent(expressionSplitPane);
         
         // 创建日志面板
         JPanel logPanel = new JPanel(new BorderLayout());
@@ -281,13 +329,21 @@ public class StringFormatterUI extends JFrame {
             log("已交换输入和输出内容");
         });
 
+        // 清空表达式按钮事件
+        clearExpressionButton.addActionListener(e -> {
+            expressionTextArea.setText("");
+            log("已清空表达式内容");
+        });
+
         // 自动换行复选框事件
         wrapCheckBox.addActionListener(e -> {
             boolean wrap = wrapCheckBox.isSelected();
             inputTextArea.setLineWrap(wrap);
             outputTextArea.setLineWrap(wrap);
+            expressionTextArea.setLineWrap(wrap);
             inputTextArea.setWrapStyleWord(wrap);
             outputTextArea.setWrapStyleWord(wrap);
+            expressionTextArea.setWrapStyleWord(wrap);
             log(wrap ? "已启用自动换行" : "已禁用自动换行");
         });
     }
@@ -297,6 +353,7 @@ public class StringFormatterUI extends JFrame {
      */
     private void executeOperation() {
         String inputText = inputTextArea.getText();
+        String expressions = expressionTextArea.getText().trim();
         if (selectedOperation == null || selectedOperation.isEmpty()) {
             JOptionPane.showMessageDialog(this, "请选择一个操作", "错误", JOptionPane.ERROR_MESSAGE);
             return;
@@ -312,10 +369,35 @@ public class StringFormatterUI extends JFrame {
             Operation operation = OperationFactory.getOperation(selectedOperation);
             if (operation != null) {
                 long startTime = System.currentTimeMillis();
-                String result = operation.execute(inputText);
+                String result;
+
+                // 对于XML和JSON格式化操作，如果有表达式输入，使用特殊处理
+                if (!expressions.isEmpty() && operation.getClass().getSimpleName().equals("XmlFormatOperation")) {
+                    // 通过反射调用带有表达式参数的方法
+                    try {
+                        java.lang.reflect.Method method = operation.getClass().getMethod("execute", String.class, String.class);
+                        result = (String) method.invoke(operation, inputText, expressions);
+                    } catch (NoSuchMethodException e) {
+                        // 如果没有带表达式的方法，使用原始方法
+                        result = operation.execute(inputText);
+                    }
+                } else if (!expressions.isEmpty() && operation.getClass().getSimpleName().equals("JsonFormatOperation")) {
+                    // 通过反射调用带有表达式参数的方法
+                    try {
+                        java.lang.reflect.Method method = operation.getClass().getMethod("execute", String.class, String.class);
+                        result = (String) method.invoke(operation, inputText, expressions);
+                    } catch (NoSuchMethodException e) {
+                        // 如果没有带表达式的方法，使用原始方法
+                        result = operation.execute(inputText);
+                    }
+                } else {
+                    result = operation.execute(inputText);
+                }
+
                 long endTime = System.currentTimeMillis();
                 outputTextArea.setText(result);
-                log("执行操作: " + selectedOperation + " (耗时: " + (endTime - startTime) + "ms)");
+                log("执行操作: " + selectedOperation + " (耗时: " + (endTime - startTime) + "ms)" +
+                    (expressions.isEmpty() ? "" : " [使用表达式过滤]"));
             } else {
                 JOptionPane.showMessageDialog(this, "未找到操作: " + selectedOperation, "错误", JOptionPane.ERROR_MESSAGE);
                 log("未找到操作: " + selectedOperation);
