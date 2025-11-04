@@ -6,7 +6,8 @@ package org.oxff.core;
 public enum OperationCategory {
     ENCODING_DECODING("编解码"),
     FORMATTING("格式化"),
-    HASHING("哈希");
+    HASHING("哈希"),
+    AUTOMATION("自动化操作");
 
     private final String displayName;
 

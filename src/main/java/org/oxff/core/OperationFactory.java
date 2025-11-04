@@ -10,7 +10,7 @@ import java.util.*;
 public class OperationFactory {
     private static final Map<String, Operation> operations = new HashMap<>();
     private static final Map<OperationCategory, List<Operation>> operationsByCategory = new HashMap<>();
-    
+
     static {
         // 初始化所有操作
         Operation[] allOperations = {
@@ -28,7 +28,8 @@ public class OperationFactory {
             new HexDecodeOperation(),
             new Md5HashOperation(),
             new Sha1HashOperation(),
-            new Sha256HashOperation()
+            new Sha256HashOperation(),
+            new AutoInputOperation()
         };
         
         // 按名称映射操作
