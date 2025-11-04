@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mvn:*)"
+      "Bash(mvn:*)",
+      "Bash(java -jar target/uiTools-1.1.8.jar:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
