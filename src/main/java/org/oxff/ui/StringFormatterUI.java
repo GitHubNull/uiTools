@@ -56,6 +56,15 @@ public class StringFormatterUI extends JFrame {
     private JSplitPane verticalSplitPane;
     private JSplitPane outputExpressionSplitPane; // Added to access the split pane that contains expression and output panels
     private JPanel expressionPanel; // Added to access the expression panel
+    private JPanel outputPanel; // Added to access the output panel
+    
+    // 自动化操作配置控件
+    private JPanel automationConfigPanel;
+    private JSpinner delaySecondsSpinner;
+    private JSpinner charIntervalMsSpinner;
+    private JRadioButton inputSourceRadio;
+    private JRadioButton clipboardSourceRadio;
+    
     private boolean isWrap = false;
     
     public StringFormatterUI() {
@@ -157,6 +166,39 @@ public class StringFormatterUI extends JFrame {
         inputPanel.add(inputButtonPanel, BorderLayout.NORTH);
         inputPanel.add(inputScrollPane, BorderLayout.CENTER);
 
+        // 自动化配置面板
+        automationConfigPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        automationConfigPanel.setBorder(BorderFactory.createTitledBorder("自动化输入配置"));
+        
+        automationConfigPanel.add(new JLabel("延迟时间(秒):"));
+        SpinnerModel delayModel = new SpinnerNumberModel(3, 0, 60, 1);
+        delaySecondsSpinner = new JSpinner(delayModel);
+        delaySecondsSpinner.setPreferredSize(new Dimension(60, 25));
+        automationConfigPanel.add(delaySecondsSpinner);
+        
+        automationConfigPanel.add(Box.createHorizontalStrut(15));
+        
+        automationConfigPanel.add(new JLabel("字符间隔(毫秒):"));
+        SpinnerModel intervalModel = new SpinnerNumberModel(100, 0, 1000, 10);
+        charIntervalMsSpinner = new JSpinner(intervalModel);
+        charIntervalMsSpinner.setPreferredSize(new Dimension(70, 25));
+        automationConfigPanel.add(charIntervalMsSpinner);
+        
+        automationConfigPanel.add(Box.createHorizontalStrut(15));
+        
+        automationConfigPanel.add(new JLabel("输入来源:"));
+        ButtonGroup sourceGroup = new ButtonGroup();
+        inputSourceRadio = new JRadioButton("输入框", true);
+        clipboardSourceRadio = new JRadioButton("剪贴板");
+        sourceGroup.add(inputSourceRadio);
+        sourceGroup.add(clipboardSourceRadio);
+        automationConfigPanel.add(inputSourceRadio);
+        automationConfigPanel.add(clipboardSourceRadio);
+        
+        // 默认隐藏自动化配置面板
+        automationConfigPanel.setVisible(false);
+        inputPanel.add(automationConfigPanel, BorderLayout.SOUTH);
+
         // 表达式输入区域
         expressionPanel = new JPanel(new BorderLayout());
         expressionPanel.setBorder(BorderFactory.createTitledBorder("XPath/JSONPath表达式 (每行一个)"));
@@ -193,7 +235,7 @@ public class StringFormatterUI extends JFrame {
         splitPane.setDividerSize(10); // 设置分割条的大小
 
         // 输出区域
-        JPanel outputPanel = new JPanel(new BorderLayout());
+        outputPanel = new JPanel(new BorderLayout());
         outputPanel.setBorder(BorderFactory.createTitledBorder("输出"));
 
         // 输出区域按钮面板
@@ -280,10 +322,32 @@ public class StringFormatterUI extends JFrame {
     }
 
     /**
-     * Updates the visibility of the expression panel based on the selected operation
+     * Checks if the given operation is an automation operation
+     * @param operationName the name of the operation
+     * @return true if the operation is an automation operation, false otherwise
+     */
+    private boolean isAutomationOperation(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        Operation operation = OperationFactory.getOperation(operationName);
+        if (operation == null) {
+            return false;
+        }
+
+        // Check if operation belongs to AUTOMATION category
+        return operation.getCategory() == OperationCategory.AUTOMATION;
+    }
+
+    /**
+     * Updates the visibility of the expression panel and output panel based on the selected operation
      */
     private void updateExpressionPanelVisibility() {
         boolean showExpressionPanel = requiresExpressionInput(selectedOperation);
+        boolean isAutomation = isAutomationOperation(selectedOperation);
+
+        // Update expression panel visibility
         if (showExpressionPanel) {
             // Show the expression panel
             outputExpressionSplitPane.setLeftComponent(expressionPanel);
@@ -291,6 +355,20 @@ public class StringFormatterUI extends JFrame {
             // Hide the expression panel by removing it
             outputExpressionSplitPane.setLeftComponent(null);
         }
+
+        // Update output panel visibility
+        if (isAutomation) {
+            // For automation operations, hide the output panel
+            outputExpressionSplitPane.setRightComponent(null);
+            // Show automation config panel
+            automationConfigPanel.setVisible(true);
+        } else {
+            // For other operations, show the output panel
+            outputExpressionSplitPane.setRightComponent(outputPanel);
+            // Hide automation config panel
+            automationConfigPanel.setVisible(false);
+        }
+
         outputExpressionSplitPane.revalidate();
         outputExpressionSplitPane.repaint();
     }
@@ -401,53 +479,86 @@ public class StringFormatterUI extends JFrame {
             return;
         }
 
-        if (inputText.isEmpty()) {
+        Operation operation = OperationFactory.getOperation(selectedOperation);
+        if (operation == null) {
+            JOptionPane.showMessageDialog(this, "未找到操作: " + selectedOperation, "错误", JOptionPane.ERROR_MESSAGE);
+            log("未找到操作: " + selectedOperation);
+            return;
+        }
+
+        // 对于自动化操作，不需要输入文本验证，直接执行
+        if (operation.getCategory() != OperationCategory.AUTOMATION && inputText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "请输入要处理的文本", "提示", JOptionPane.WARNING_MESSAGE);
             log("执行操作失败：输入为空");
             return;
         }
 
-        try {
-            Operation operation = OperationFactory.getOperation(selectedOperation);
-            if (operation != null) {
-                long startTime = System.currentTimeMillis();
-                String result;
+        // 对于自动化操作，从 UI 控件读取配置并设置到操作对象
+        if (operation.getCategory() == OperationCategory.AUTOMATION) {
+            try {
+                int delaySeconds = (Integer) delaySecondsSpinner.getValue();
+                int charIntervalMs = (Integer) charIntervalMsSpinner.getValue();
+                boolean useClipboard = clipboardSourceRadio.isSelected();
+                
+                // 通过反射设置配置
+                java.lang.reflect.Method setDelayMethod = operation.getClass().getMethod("setDelaySeconds", int.class);
+                java.lang.reflect.Method setIntervalMethod = operation.getClass().getMethod("setCharIntervalMs", int.class);
+                java.lang.reflect.Method setClipboardMethod = operation.getClass().getMethod("setUseClipboard", boolean.class);
+                
+                setDelayMethod.invoke(operation, delaySeconds);
+                setIntervalMethod.invoke(operation, charIntervalMs);
+                setClipboardMethod.invoke(operation, useClipboard);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "设置自动化配置失败", e);
+            }
+        }
 
-                // 对于XML和JSON格式化操作，如果有表达式输入，使用特殊处理
-                if (!expressions.isEmpty() && operation.getClass().getSimpleName().equals("XmlFormatOperation")) {
-                    // 通过反射调用带有表达式参数的方法
-                    try {
-                        java.lang.reflect.Method method = operation.getClass().getMethod("execute", String.class, String.class);
-                        result = (String) method.invoke(operation, inputText, expressions);
-                    } catch (NoSuchMethodException e) {
-                        // 如果没有带表达式的方法，使用原始方法
-                        result = operation.execute(inputText);
-                    }
-                } else if (!expressions.isEmpty() && operation.getClass().getSimpleName().equals("JsonFormatOperation")) {
-                    // 通过反射调用带有表达式参数的方法
-                    try {
-                        java.lang.reflect.Method method = operation.getClass().getMethod("execute", String.class, String.class);
-                        result = (String) method.invoke(operation, inputText, expressions);
-                    } catch (NoSuchMethodException e) {
-                        // 如果没有带表达式的方法，使用原始方法
-                        result = operation.execute(inputText);
-                    }
-                } else {
+        try {
+            long startTime = System.currentTimeMillis();
+            String result;
+
+            // 对于XML和JSON格式化操作，如果有表达式输入，使用特殊处理
+            if (!expressions.isEmpty() && operation.getClass().getSimpleName().equals("XmlFormatOperation")) {
+                // 通过反射调用带有表达式参数的方法
+                try {
+                    java.lang.reflect.Method method = operation.getClass().getMethod("execute", String.class, String.class);
+                    result = (String) method.invoke(operation, inputText, expressions);
+                } catch (NoSuchMethodException e) {
+                    // 如果没有带表达式的方法，使用原始方法
                     result = operation.execute(inputText);
                 }
-
-                long endTime = System.currentTimeMillis();
-                outputTextArea.setText(result);
-                log("执行操作: " + selectedOperation + " (耗时: " + (endTime - startTime) + "ms)" +
-                    (expressions.isEmpty() ? "" : " [使用表达式过滤]"));
+            } else if (!expressions.isEmpty() && operation.getClass().getSimpleName().equals("JsonFormatOperation")) {
+                // 通过反射调用带有表达式参数的方法
+                try {
+                    java.lang.reflect.Method method = operation.getClass().getMethod("execute", String.class, String.class);
+                    result = (String) method.invoke(operation, inputText, expressions);
+                } catch (NoSuchMethodException e) {
+                    // 如果没有并表达式的方法，使用原始方法
+                    result = operation.execute(inputText);
+                }
             } else {
-                JOptionPane.showMessageDialog(this, "未找到操作: " + selectedOperation, "错误", JOptionPane.ERROR_MESSAGE);
-                log("未找到操作: " + selectedOperation);
+                result = operation.execute(inputText);
             }
+
+            long endTime = System.currentTimeMillis();
+
+            // 对于自动化操作，结果显示在日志区域；其他操作显示在输出框
+            if (operation.getCategory() == OperationCategory.AUTOMATION) {
+                log(result);
+            } else {
+                outputTextArea.setText(result);
+            }
+
+            log("执行操作: " + selectedOperation + " (耗时: " + (endTime - startTime) + "ms)" +
+                (expressions.isEmpty() ? "" : " [使用表达式过滤]"));
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "执行操作失败: " + selectedOperation, ex);
-            outputTextArea.setText("执行失败: " + ex.getMessage());
-            log("执行操作失败: " + selectedOperation + " - " + ex.getMessage());
+            if (operation.getCategory() == OperationCategory.AUTOMATION) {
+                log("执行操作失败: " + selectedOperation + " - " + ex.getMessage());
+            } else {
+                outputTextArea.setText("执行失败: " + ex.getMessage());
+                log("执行操作失败: " + selectedOperation + " - " + ex.getMessage());
+            }
         }
     }
 

@@ -16,13 +16,40 @@ import java.util.concurrent.TimeUnit;
  */
 public class AutoInputOperation implements Operation {
 
+    // 配置参数(由UI设置)
+    private int delaySeconds = 3;
+    private int charIntervalMs = 100;
+    private boolean useClipboard = false;
+
+    /**
+     * 设置延迟时间
+     */
+    public void setDelaySeconds(int delaySeconds) {
+        this.delaySeconds = delaySeconds;
+    }
+
+    /**
+     * 设置字符间隔
+     */
+    public void setCharIntervalMs(int charIntervalMs) {
+        this.charIntervalMs = charIntervalMs;
+    }
+
+    /**
+     * 设置是否使用剪贴板
+     */
+    public void setUseClipboard(boolean useClipboard) {
+        this.useClipboard = useClipboard;
+    }
+
     @Override
     public String execute(String input) {
-        // 显示配置对话框
-        AutoInputConfig config = showConfigDialog(input);
-        if (config == null) {
-            return "操作已取消";
-        }
+        // 创建配置对象
+        AutoInputConfig config = new AutoInputConfig();
+        config.delaySeconds = this.delaySeconds;
+        config.charIntervalMs = this.charIntervalMs;
+        config.useClipboard = this.useClipboard;
+        config.textToInput = input;
 
         // 在新线程中执行自动化输入，避免阻塞UI
         SwingUtilities.invokeLater(() -> {
@@ -51,77 +78,6 @@ public class AutoInputOperation implements Operation {
         return "键盘模拟输入";
     }
 
-    /**
-     * 显示配置对话框
-     */
-    private AutoInputConfig showConfigDialog(String inputText) {
-        // 创建对话框
-        JDialog dialog = new JDialog((Frame) null, "自动化输入配置", true);
-        dialog.setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-
-        // 延迟时间设置
-        JPanel delayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        delayPanel.add(new JLabel("延迟输入时间(秒): "));
-        SpinnerModel delayModel = new SpinnerNumberModel(3, 0, 60, 1);
-        JSpinner delaySpinner = new JSpinner(delayModel);
-        delayPanel.add(delaySpinner);
-        dialog.add(delayPanel);
-
-        // 字符间隔设置
-        JPanel intervalPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        intervalPanel.add(new JLabel("字符间隔(毫秒): "));
-        SpinnerModel intervalModel = new SpinnerNumberModel(100, 0, 1000, 10);
-        JSpinner intervalSpinner = new JSpinner(intervalModel);
-        intervalPanel.add(intervalSpinner);
-        dialog.add(intervalPanel);
-
-        // 输入源选择
-        JPanel sourcePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        sourcePanel.add(new JLabel("输入来源: "));
-        ButtonGroup sourceGroup = new ButtonGroup();
-        JRadioButton inputSourceRadio = new JRadioButton("输入框内容", true);
-        JRadioButton clipboardSourceRadio = new JRadioButton("剪贴板内容");
-        sourceGroup.add(inputSourceRadio);
-        sourceGroup.add(clipboardSourceRadio);
-        sourcePanel.add(inputSourceRadio);
-        sourcePanel.add(clipboardSourceRadio);
-        dialog.add(sourcePanel);
-
-        // 按钮面板
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton okButton = new JButton("确定");
-        JButton cancelButton = new JButton("取消");
-        buttonPanel.add(okButton);
-        buttonPanel.add(cancelButton);
-        dialog.add(buttonPanel);
-
-        // 配置结果
-        AutoInputConfig[] result = new AutoInputConfig[1];
-
-        // 确定按钮事件
-        okButton.addActionListener(e -> {
-            result[0] = new AutoInputConfig();
-            result[0].delaySeconds = (Integer) delaySpinner.getValue();
-            result[0].charIntervalMs = (Integer) intervalSpinner.getValue();
-            result[0].useClipboard = clipboardSourceRadio.isSelected();
-            result[0].textToInput = inputText;
-            dialog.dispose();
-        });
-
-        // 取消按钮事件
-        cancelButton.addActionListener(e -> {
-            result[0] = null;
-            dialog.dispose();
-        });
-
-        // 设置对话框属性并显示
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-
-        return result[0];
-    }
 
     /**
      * 执行自动化输入
