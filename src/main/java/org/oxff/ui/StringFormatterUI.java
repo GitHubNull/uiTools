@@ -54,6 +54,8 @@ public class StringFormatterUI extends JFrame {
     private JSplitPane mainSplitPane;
     @SuppressWarnings("FieldCanBeLocal")
     private JSplitPane verticalSplitPane;
+    private JSplitPane outputExpressionSplitPane; // Added to access the split pane that contains expression and output panels
+    private JPanel expressionPanel; // Added to access the expression panel
     private boolean isWrap = false;
     
     public StringFormatterUI() {
@@ -75,7 +77,10 @@ public class StringFormatterUI extends JFrame {
         
         JLabel operationLabel = new JLabel("选择操作:");
         operationComboBox = new JComboBox<>(OperationFactory.getAllOperationNames());
-        operationComboBox.addActionListener(e -> selectedOperation = (String) operationComboBox.getSelectedItem());
+        operationComboBox.addActionListener(e -> {
+            selectedOperation = (String) operationComboBox.getSelectedItem();
+            updateExpressionPanelVisibility();
+        });
         executeButton = new JButton("执行");
         
         topPanel.add(operationLabel);
@@ -96,12 +101,13 @@ public class StringFormatterUI extends JFrame {
         operationTree.addTreeSelectionListener(e -> {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) operationTree.getLastSelectedPathComponent();
             if (node == null) return;
-            
+
             Object userObject = node.getUserObject();
             if (userObject instanceof Operation) {
                 Operation operation = (Operation) userObject;
                 selectedOperation = operation.getDisplayName();
                 operationComboBox.setSelectedItem(selectedOperation);
+                updateExpressionPanelVisibility();
             }
         });
         
@@ -152,7 +158,7 @@ public class StringFormatterUI extends JFrame {
         inputPanel.add(inputScrollPane, BorderLayout.CENTER);
 
         // 表达式输入区域
-        JPanel expressionPanel = new JPanel(new BorderLayout());
+        expressionPanel = new JPanel(new BorderLayout());
         expressionPanel.setBorder(BorderFactory.createTitledBorder("XPath/JSONPath表达式 (每行一个)"));
 
         // 表达式区域按钮面板
@@ -210,7 +216,7 @@ public class StringFormatterUI extends JFrame {
         outputPanel.add(outputScrollPane, BorderLayout.CENTER);
 
         // 设置垂直分割面板：上面是输入区域，下面是表达式和输出区域的水平分割
-        JSplitPane outputExpressionSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        outputExpressionSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         outputExpressionSplitPane.setResizeWeight(0.5);
         outputExpressionSplitPane.setDividerLocation(0.5);
         outputExpressionSplitPane.setDividerSize(10);
@@ -251,6 +257,42 @@ public class StringFormatterUI extends JFrame {
         
         // 初始化日志
         log("应用程序启动");
+    }
+
+    /**
+     * Checks if the given operation requires expression input (XPath/JSONPath)
+     * @param operationName the name of the operation
+     * @return true if the operation requires expression input, false otherwise
+     */
+    private boolean requiresExpressionInput(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        Operation operation = OperationFactory.getOperation(operationName);
+        if (operation == null) {
+            return false;
+        }
+
+        // Only JSON and XML format operations require expression input
+        String className = operation.getClass().getSimpleName();
+        return "JsonFormatOperation".equals(className) || "XmlFormatOperation".equals(className);
+    }
+
+    /**
+     * Updates the visibility of the expression panel based on the selected operation
+     */
+    private void updateExpressionPanelVisibility() {
+        boolean showExpressionPanel = requiresExpressionInput(selectedOperation);
+        if (showExpressionPanel) {
+            // Show the expression panel
+            outputExpressionSplitPane.setLeftComponent(expressionPanel);
+        } else {
+            // Hide the expression panel by removing it
+            outputExpressionSplitPane.setLeftComponent(null);
+        }
+        outputExpressionSplitPane.revalidate();
+        outputExpressionSplitPane.repaint();
     }
     
     private JTree createOperationTree() {
