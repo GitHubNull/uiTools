@@ -31,7 +31,14 @@ public class OperationFactory {
             new Sha256HashOperation(),
             new AutoInputOperation(),
             new QRCodeGenerateOperation(),
-            new QRCodeDecodeOperation()
+            new QRCodeDecodeOperation(),
+            // 时间戳操作
+            new CurrentTimestampOperation(),
+            new TimestampFromDateOperation(),
+            new TimestampToDateOperation(),
+            new TimestampFormatOperation(),
+            new TimestampToUtcOperation(),
+            new TimestampFromUtcOperation()
         };
         
         // 按名称映射操作

@@ -8,7 +8,8 @@ public enum OperationCategory {
     FORMATTING("格式化"),
     HASHING("哈希"),
     AUTOMATION("自动化操作"),
-    QRCODE("二维码");
+    QRCODE("二维码"),
+    TIMESTAMP("时间戳");
 
     private final String displayName;
 

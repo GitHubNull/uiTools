@@ -85,6 +85,10 @@ public class StringFormatterUI extends JFrame {
     private JButton pasteImageButton;
     private JLabel selectedImageLabel;
     private String selectedImagePath;
+
+    // 时区选择相关控件
+    private JPanel timezoneConfigPanel;
+    private JComboBox<String> timezoneComboBox;
     
     private boolean isWrap = false;
     
@@ -244,6 +248,33 @@ public class StringFormatterUI extends JFrame {
         // 默认隐藏图片输入面板
         imageInputPanel.setVisible(false);
         inputPanel.add(imageInputPanel, BorderLayout.SOUTH);
+
+        // 时区选择面板
+        timezoneConfigPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        timezoneConfigPanel.setBorder(BorderFactory.createTitledBorder("时区选择"));
+
+        JLabel timezoneLabel = new JLabel("选择时区:");
+        timezoneComboBox = new JComboBox<>(new String[]{
+            "系统时区",
+            "UTC (协调世界时)",
+            "GMT (格林威治)",
+            "EST (美国东部)",
+            "PST (美国西部)",
+            "CET (欧洲中部)",
+            "GMT (英国伦敦)",
+            "JST (日本)",
+            "AEST (澳大利亚东部)",
+            "IST (印度)",
+            "CST (中国)"
+        });
+        timezoneComboBox.setPreferredSize(new Dimension(200, 25));
+
+        timezoneConfigPanel.add(timezoneLabel);
+        timezoneConfigPanel.add(timezoneComboBox);
+
+        // 默认隐藏时区选择面板
+        timezoneConfigPanel.setVisible(false);
+        inputPanel.add(timezoneConfigPanel, BorderLayout.SOUTH);
 
         // 表达式输入区域
         expressionPanel = new JPanel(new BorderLayout());
@@ -445,10 +476,39 @@ public class StringFormatterUI extends JFrame {
     }
 
     /**
+     * Checks if the given operation can be executed without input
+     * @param operationName the name of the operation
+     * @return true if the operation can be executed without input, false otherwise
+     */
+    private boolean canExecuteWithoutInput(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        // "获取当前时间戳" can be executed without input
+        return "获取当前时间戳".equals(operationName);
+    }
+
+    /**
+     * Checks if the given operation requires timezone selection
+     * @param operationName the name of the operation
+     * @return true if the operation requires timezone selection, false otherwise
+     */
+    private boolean requiresTimezoneSelection(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        // "获取当前时间戳" requires timezone selection
+        return "获取当前时间戳".equals(operationName);
+    }
+
+    /**
      * Updates the visibility of the image input panel based on the selected operation
      */
     private void updateImageInputPanelVisibility() {
         boolean showImageInputPanel = requiresImageInput(selectedOperation);
+        boolean showTimezonePanel = requiresTimezoneSelection(selectedOperation);
 
         if (showImageInputPanel) {
             // 显示图片输入面板
@@ -457,15 +517,29 @@ public class StringFormatterUI extends JFrame {
             inputTextArea.setEnabled(false);
             inputTextArea.setBackground(Color.LIGHT_GRAY);
             inputTextArea.setText("请使用下方的图片选择功能选择二维码图片文件");
+        } else if (showTimezonePanel) {
+            // 显示时区选择面板，同时隐藏输入框（因为不需要输入）
+            inputTextArea.setEnabled(false);
+            inputTextArea.setBackground(Color.LIGHT_GRAY);
+            inputTextArea.setText("请使用下方的时区选择功能选择时区");
         } else {
             // 隐藏图片输入面板
             imageInputPanel.setVisible(false);
             // 显示普通的文本输入区域
             inputTextArea.setEnabled(true);
             inputTextArea.setBackground(Color.WHITE);
-            if ("请使用下方的图片选择功能选择二维码图片文件".equals(inputTextArea.getText())) {
+            if ("请使用下方的图片选择功能选择二维码图片文件".equals(inputTextArea.getText()) ||
+                "请使用下方的时区选择功能选择时区".equals(inputTextArea.getText())) {
                 inputTextArea.setText("");
             }
+        }
+
+        if (showTimezonePanel) {
+            // 显示时区选择面板
+            timezoneConfigPanel.setVisible(true);
+        } else {
+            // 隐藏时区选择面板
+            timezoneConfigPanel.setVisible(false);
         }
     }
 
@@ -631,8 +705,49 @@ public class StringFormatterUI extends JFrame {
                 return;
             }
         }
+        // 对于"获取当前时间戳"操作，使用时区选择器的值作为输入
+        else if (requiresTimezoneSelection(selectedOperation)) {
+            String selectedTimezone = (String) timezoneComboBox.getSelectedItem();
+            // 将显示名称映射到时区标识
+            switch (selectedTimezone) {
+                case "系统时区":
+                    inputText = ""; // 空字符串表示使用系统时区
+                    break;
+                case "UTC (协调世界时)":
+                case "GMT (格林威治)":
+                    inputText = "utc";
+                    break;
+                case "EST (美国东部)":
+                    inputText = "America/New_York";
+                    break;
+                case "PST (美国西部)":
+                    inputText = "America/Los_Angeles";
+                    break;
+                case "CET (欧洲中部)":
+                    inputText = "Europe/Berlin";
+                    break;
+                case "GMT (英国伦敦)":
+                    inputText = "Europe/London";
+                    break;
+                case "JST (日本)":
+                    inputText = "Asia/Tokyo";
+                    break;
+                case "AEST (澳大利亚东部)":
+                    inputText = "Australia/Sydney";
+                    break;
+                case "IST (印度)":
+                    inputText = "Asia/Kolkata";
+                    break;
+                case "CST (中国)":
+                    inputText = "Asia/Shanghai";
+                    break;
+                default:
+                    inputText = ""; // 默认使用系统时区
+                    break;
+            }
+        }
         // 对于自动化操作，不需要输入文本验证，直接执行
-        else if (operation.getCategory() != OperationCategory.AUTOMATION && inputText.isEmpty()) {
+        else if (operation.getCategory() != OperationCategory.AUTOMATION && !canExecuteWithoutInput(selectedOperation) && inputText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "请输入要处理的文本", "提示", JOptionPane.WARNING_MESSAGE);
             log("执行操作失败：输入为空");
             return;
