@@ -46,7 +46,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-13]
+        os: [ubuntu-22.04, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -184,7 +184,7 @@ jobs:
       - name: Download macOS native package
         uses: actions/download-artifact@v4
         with:
-          name: native-package-macos-13
+          name: native-package-macos-latest
           path: downloaded-artifacts/native-package-macOS
 
       - name: Debug downloaded artifacts
