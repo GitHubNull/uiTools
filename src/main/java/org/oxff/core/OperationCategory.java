@@ -7,7 +7,8 @@ public enum OperationCategory {
     ENCODING_DECODING("编解码"),
     FORMATTING("格式化"),
     HASHING("哈希"),
-    AUTOMATION("自动化操作");
+    AUTOMATION("自动化操作"),
+    QRCODE("二维码");
 
     private final String displayName;
 

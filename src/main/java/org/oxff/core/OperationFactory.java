@@ -29,7 +29,9 @@ public class OperationFactory {
             new Md5HashOperation(),
             new Sha1HashOperation(),
             new Sha256HashOperation(),
-            new AutoInputOperation()
+            new AutoInputOperation(),
+            new QRCodeGenerateOperation(),
+            new QRCodeDecodeOperation()
         };
         
         // 按名称映射操作

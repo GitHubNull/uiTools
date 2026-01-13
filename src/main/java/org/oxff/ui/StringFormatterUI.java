@@ -19,9 +19,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 
 // 添加RSyntaxTextArea相关导入
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -57,6 +63,13 @@ public class StringFormatterUI extends JFrame {
     private JSplitPane outputExpressionSplitPane; // Added to access the split pane that contains expression and output panels
     private JPanel expressionPanel; // Added to access the expression panel
     private JPanel outputPanel; // Added to access the output panel
+
+    // 图片显示相关组件
+    private JLabel imageDisplayLabel;
+    private JPanel imagePanel;
+    private JScrollPane imageScrollPane;
+    private CardLayout outputCardLayout;
+    private JPanel outputCardsPanel;
     
     // 自动化操作配置控件
     private JPanel automationConfigPanel;
@@ -64,6 +77,14 @@ public class StringFormatterUI extends JFrame {
     private JSpinner charIntervalMsSpinner;
     private JRadioButton inputSourceRadio;
     private JRadioButton clipboardSourceRadio;
+
+    // 图片输入相关控件
+    private JPanel imageInputPanel;
+    private JLabel imageInputLabel;
+    private JButton selectImageButton;
+    private JButton pasteImageButton;
+    private JLabel selectedImageLabel;
+    private String selectedImagePath;
     
     private boolean isWrap = false;
     
@@ -89,6 +110,7 @@ public class StringFormatterUI extends JFrame {
         operationComboBox.addActionListener(e -> {
             selectedOperation = (String) operationComboBox.getSelectedItem();
             updateExpressionPanelVisibility();
+            updateImageInputPanelVisibility();
         });
         executeButton = new JButton("执行");
         
@@ -199,6 +221,30 @@ public class StringFormatterUI extends JFrame {
         automationConfigPanel.setVisible(false);
         inputPanel.add(automationConfigPanel, BorderLayout.SOUTH);
 
+        // 图片输入面板
+        imageInputPanel = new JPanel(new BorderLayout());
+        imageInputPanel.setBorder(BorderFactory.createTitledBorder("图片输入"));
+
+        // 图片输入按钮面板
+        JPanel imageInputButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        selectImageButton = new JButton("选择图片");
+        pasteImageButton = new JButton("粘贴图片");
+
+        imageInputButtonPanel.add(selectImageButton);
+        imageInputButtonPanel.add(pasteImageButton);
+
+        // 图片状态标签
+        selectedImageLabel = new JLabel("未选择图片");
+        selectedImageLabel.setForeground(Color.GRAY);
+        selectedImageLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        imageInputPanel.add(imageInputButtonPanel, BorderLayout.NORTH);
+        imageInputPanel.add(selectedImageLabel, BorderLayout.CENTER);
+
+        // 默认隐藏图片输入面板
+        imageInputPanel.setVisible(false);
+        inputPanel.add(imageInputPanel, BorderLayout.SOUTH);
+
         // 表达式输入区域
         expressionPanel = new JPanel(new BorderLayout());
         expressionPanel.setBorder(BorderFactory.createTitledBorder("XPath/JSONPath表达式 (每行一个)"));
@@ -234,9 +280,13 @@ public class StringFormatterUI extends JFrame {
         splitPane.setDividerLocation(0.5);
         splitPane.setDividerSize(10); // 设置分割条的大小
 
-        // 输出区域
-        outputPanel = new JPanel(new BorderLayout());
-        outputPanel.setBorder(BorderFactory.createTitledBorder("输出"));
+        // 输出区域 - 使用卡片布局支持文本和图片切换
+        outputCardLayout = new CardLayout();
+        outputCardsPanel = new JPanel(outputCardLayout);
+
+        // 文本输出卡片
+        JPanel textOutputCard = new JPanel(new BorderLayout());
+        textOutputCard.setBorder(BorderFactory.createTitledBorder("输出"));
 
         // 输出区域按钮面板
         JPanel outputButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -254,8 +304,43 @@ public class StringFormatterUI extends JFrame {
         // 使用RTextScrollPane提供行号显示
         RTextScrollPane outputScrollPane = new RTextScrollPane(outputTextArea);
 
-        outputPanel.add(outputButtonPanel, BorderLayout.NORTH);
-        outputPanel.add(outputScrollPane, BorderLayout.CENTER);
+        textOutputCard.add(outputButtonPanel, BorderLayout.NORTH);
+        textOutputCard.add(outputScrollPane, BorderLayout.CENTER);
+
+        // 图片输出卡片
+        JPanel imageOutputCard = new JPanel(new BorderLayout());
+        imageOutputCard.setBorder(BorderFactory.createTitledBorder("图片输出"));
+
+        imagePanel = new JPanel(new BorderLayout());
+        imageDisplayLabel = new JLabel();
+        imageDisplayLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        imageDisplayLabel.setVerticalAlignment(SwingConstants.CENTER);
+        imageScrollPane = new JScrollPane(imageDisplayLabel);
+
+        imagePanel.add(imageScrollPane, BorderLayout.CENTER);
+        imageOutputCard.add(imagePanel, BorderLayout.CENTER);
+
+        // 添加按钮面板到图片输出卡片
+        JPanel imageButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton saveImageButton = new JButton("保存图片");
+        JButton copyImageButton = new JButton("复制图片");
+
+        saveImageButton.addActionListener(e -> saveImage());
+        copyImageButton.addActionListener(e -> copyImage());
+
+        imageButtonPanel.add(saveImageButton);
+        imageButtonPanel.add(copyImageButton);
+        imageOutputCard.add(imageButtonPanel, BorderLayout.NORTH);
+
+        // 将两个卡片添加到卡片面板
+        outputCardsPanel.add(textOutputCard, "TEXT");
+        outputCardsPanel.add(imageOutputCard, "IMAGE");
+
+        // 默认显示文本输出
+        outputCardLayout.show(outputCardsPanel, "TEXT");
+
+        // 保持原有的outputPanel引用，指向卡片面板
+        outputPanel = outputCardsPanel;
 
         // 设置垂直分割面板：上面是输入区域，下面是表达式和输出区域的水平分割
         outputExpressionSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -341,6 +426,50 @@ public class StringFormatterUI extends JFrame {
     }
 
     /**
+     * Checks if the given operation requires image input (QR code decode)
+     * @param operationName the name of the operation
+     * @return true if the operation requires image input, false otherwise
+     */
+    private boolean requiresImageInput(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        Operation operation = OperationFactory.getOperation(operationName);
+        if (operation == null) {
+            return false;
+        }
+
+        // Check if operation is QR code decode operation
+        return "QRCodeDecodeOperation".equals(operation.getClass().getSimpleName());
+    }
+
+    /**
+     * Updates the visibility of the image input panel based on the selected operation
+     */
+    private void updateImageInputPanelVisibility() {
+        boolean showImageInputPanel = requiresImageInput(selectedOperation);
+
+        if (showImageInputPanel) {
+            // 显示图片输入面板
+            imageInputPanel.setVisible(true);
+            // 隐藏普通的文本输入区域
+            inputTextArea.setEnabled(false);
+            inputTextArea.setBackground(Color.LIGHT_GRAY);
+            inputTextArea.setText("请使用下方的图片选择功能选择二维码图片文件");
+        } else {
+            // 隐藏图片输入面板
+            imageInputPanel.setVisible(false);
+            // 显示普通的文本输入区域
+            inputTextArea.setEnabled(true);
+            inputTextArea.setBackground(Color.WHITE);
+            if ("请使用下方的图片选择功能选择二维码图片文件".equals(inputTextArea.getText())) {
+                inputTextArea.setText("");
+            }
+        }
+    }
+
+    /**
      * Updates the visibility of the expression panel and output panel based on the selected operation
      */
     private void updateExpressionPanelVisibility() {
@@ -401,6 +530,12 @@ public class StringFormatterUI extends JFrame {
     private void setupEventListeners() {
         // 执行按钮事件
         executeButton.addActionListener(e -> executeOperation());
+
+        // 选择图片按钮事件
+        selectImageButton.addActionListener(e -> selectImageFile());
+
+        // 粘贴图片按钮事件
+        pasteImageButton.addActionListener(e -> pasteImageFromClipboard());
 
         // 复制输入按钮事件
         copyInputButton.addActionListener(e -> {
@@ -486,8 +621,18 @@ public class StringFormatterUI extends JFrame {
             return;
         }
 
+        // 对于二维码解析操作，使用图片文件路径或输入框内容
+        if (requiresImageInput(selectedOperation)) {
+            if (selectedImagePath != null && !selectedImagePath.isEmpty()) {
+                inputText = selectedImagePath;
+            } else if (inputText.isEmpty() || "请使用下方的图片选择功能选择二维码图片文件".equals(inputText)) {
+                JOptionPane.showMessageDialog(this, "请选择二维码图片文件或使用粘贴图片功能", "提示", JOptionPane.WARNING_MESSAGE);
+                log("执行操作失败：未选择图片");
+                return;
+            }
+        }
         // 对于自动化操作，不需要输入文本验证，直接执行
-        if (operation.getCategory() != OperationCategory.AUTOMATION && inputText.isEmpty()) {
+        else if (operation.getCategory() != OperationCategory.AUTOMATION && inputText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "请输入要处理的文本", "提示", JOptionPane.WARNING_MESSAGE);
             log("执行操作失败：输入为空");
             return;
@@ -516,6 +661,17 @@ public class StringFormatterUI extends JFrame {
         try {
             long startTime = System.currentTimeMillis();
             String result;
+
+            // 检查是否是返回图片的操作
+            if (operation.returnsImage()) {
+                // 图片操作
+                String imageData = operation.getImageData(inputText);
+                displayImage(imageData);
+                log("生成二维码图片: " + selectedOperation);
+                long endTime = System.currentTimeMillis();
+                log("执行操作: " + selectedOperation + " (耗时: " + (endTime - startTime) + "ms)");
+                return;
+            }
 
             // 对于XML和JSON格式化操作，如果有表达式输入，使用特殊处理
             if (!expressions.isEmpty() && operation.getClass().getSimpleName().equals("XmlFormatOperation")) {
@@ -546,7 +702,7 @@ public class StringFormatterUI extends JFrame {
             if (operation.getCategory() == OperationCategory.AUTOMATION) {
                 log(result);
             } else {
-                outputTextArea.setText(result);
+                displayText(result);
             }
 
             log("执行操作: " + selectedOperation + " (耗时: " + (endTime - startTime) + "ms)" +
@@ -563,8 +719,149 @@ public class StringFormatterUI extends JFrame {
     }
 
     /**
-     * 设置键盘快捷键
+     * 显示文本结果
      */
+    private void displayText(String text) {
+        // 切换到文本显示
+        outputCardLayout.show(outputCardsPanel, "TEXT");
+        outputTextArea.setText(text);
+    }
+
+    /**
+     * 显示图片结果
+     */
+    private void displayImage(String imageData) {
+        // 切换到图片显示
+        outputCardLayout.show(outputCardsPanel, "IMAGE");
+
+        try {
+            // 解析data URL，提取Base64数据
+            String base64Data = imageData.substring(imageData.indexOf(",") + 1);
+            byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+
+            // 创建图片图标
+            ImageIcon icon = new ImageIcon(imageBytes);
+
+            // 如果图片太大，进行缩放
+            Image image = icon.getImage();
+            int originalWidth = image.getWidth(null);
+            int originalHeight = image.getHeight(null);
+
+            // 获取显示区域大小，设置最大尺寸
+            int maxWidth = Math.min(originalWidth, 400);
+            int maxHeight = Math.min(originalHeight, 400);
+
+            // 如果图片太大，进行缩放
+            if (originalWidth > maxWidth || originalHeight > maxHeight) {
+                double scaleX = (double) maxWidth / originalWidth;
+                double scaleY = (double) maxHeight / originalHeight;
+                double scale = Math.min(scaleX, scaleY);
+
+                int scaledWidth = (int) (originalWidth * scale);
+                int scaledHeight = (int) (originalHeight * scale);
+
+                Image scaledImage = image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
+                icon = new ImageIcon(scaledImage);
+            }
+
+            imageDisplayLabel.setIcon(icon);
+            imageDisplayLabel.setText("");
+
+        } catch (Exception e) {
+            imageDisplayLabel.setIcon(null);
+            imageDisplayLabel.setText("图片显示失败: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "图片显示失败", e);
+        }
+    }
+
+    /**
+     * 保存图片到文件
+     */
+    private void saveImage() {
+        if (imageDisplayLabel.getIcon() == null) {
+            JOptionPane.showMessageDialog(this, "没有可保存的图片", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new java.io.File("qrcode.png"));
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PNG图片", "png"));
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                String fileName = fileChooser.getSelectedFile().getAbsolutePath();
+                if (!fileName.toLowerCase().endsWith(".png")) {
+                    fileName += ".png";
+                }
+
+                // 获取图片数据并保存
+                ImageIcon icon = (ImageIcon) imageDisplayLabel.getIcon();
+                Image image = icon.getImage();
+
+                // 创建BufferedImage并保存
+                java.awt.image.BufferedImage bufferedImage = new java.awt.image.BufferedImage(
+                    image.getWidth(null), image.getHeight(null), java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g2d = bufferedImage.createGraphics();
+                g2d.drawImage(image, 0, 0, null);
+                g2d.dispose();
+
+                javax.imageio.ImageIO.write(bufferedImage, "PNG", new java.io.File(fileName));
+                log("图片已保存到: " + fileName);
+                JOptionPane.showMessageDialog(this, "图片保存成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "保存图片失败", e);
+                JOptionPane.showMessageDialog(this, "保存图片失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    /**
+     * 复制图片到剪贴板
+     */
+    private void copyImage() {
+        if (imageDisplayLabel.getIcon() == null) {
+            JOptionPane.showMessageDialog(this, "没有可复制的图片", "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            ImageIcon icon = (ImageIcon) imageDisplayLabel.getIcon();
+            Image image = icon.getImage();
+
+            // 创建Transferable对象
+            Transferable transferable = new Transferable() {
+                @Override
+                public DataFlavor[] getTransferDataFlavors() {
+                    return new DataFlavor[]{DataFlavor.imageFlavor};
+                }
+
+                @Override
+                public boolean isDataFlavorSupported(DataFlavor flavor) {
+                    return DataFlavor.imageFlavor.equals(flavor);
+                }
+
+                @Override
+                public Object getTransferData(DataFlavor flavor) {
+                    if (DataFlavor.imageFlavor.equals(flavor)) {
+                        return image;
+                    }
+                    return null;
+                }
+            };
+
+            // 复制到剪贴板
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(transferable, null);
+
+            log("图片已复制到剪贴板");
+            JOptionPane.showMessageDialog(this, "图片已复制到剪贴板！", "成功", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "复制图片失败", e);
+            JOptionPane.showMessageDialog(this, "复制图片失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     private void setupKeyboardShortcuts() {
         // Ctrl+E 执行操作
         executeButton.setMnemonic(KeyEvent.VK_E);
@@ -598,6 +895,111 @@ public class StringFormatterUI extends JFrame {
                 outputTextArea.selectAll();
             }
         });
+    }
+
+    /**
+     * 选择图片文件
+     */
+    private void selectImageFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "图片文件", "png", "jpg", "jpeg", "gif", "bmp"));
+        fileChooser.setDialogTitle("选择二维码图片文件");
+
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            selectedImagePath = fileChooser.getSelectedFile().getAbsolutePath();
+            selectedImageLabel.setText("已选择: " + fileChooser.getSelectedFile().getName());
+            selectedImageLabel.setForeground(Color.BLACK);
+            log("已选择图片文件: " + selectedImagePath);
+        }
+    }
+
+    /**
+     * 从剪贴板粘贴图片
+     */
+    private void pasteImageFromClipboard() {
+        try {
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Transferable contents = clipboard.getContents(null);
+
+            if (contents != null && contents.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+                // 获取剪贴板中的图片
+                Image image = (Image) contents.getTransferData(DataFlavor.imageFlavor);
+
+                // 将图片转换为Base64编码
+                String imageData = convertImageToBase64(image);
+                if (imageData != null) {
+                    // 将图片数据放入输入框
+                    inputTextArea.setText(imageData);
+                    selectedImagePath = null; // 清除文件路径
+                    selectedImageLabel.setText("已粘贴图片到输入框");
+                    selectedImageLabel.setForeground(Color.BLUE);
+                    log("已从剪贴板粘贴图片");
+                } else {
+                    JOptionPane.showMessageDialog(this, "图片转换失败", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            } else if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                // 如果是文本，尝试作为文件路径处理
+                String text = (String) contents.getTransferData(DataFlavor.stringFlavor);
+                if (isImageFile(text)) {
+                    File file = new File(text);
+                    if (file.exists()) {
+                        selectedImagePath = text;
+                        selectedImageLabel.setText("已选择: " + file.getName());
+                        selectedImageLabel.setForeground(Color.BLACK);
+                        log("已从剪贴板选择图片文件: " + selectedImagePath);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "文件不存在: " + text, "错误", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "剪贴板中没有图片或有效的图片路径", "提示", JOptionPane.WARNING_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "剪贴板中没有图片", "提示", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "粘贴图片失败", e);
+            JOptionPane.showMessageDialog(this, "粘贴图片失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * 将图片转换为Base64编码
+     */
+    private String convertImageToBase64(Image image) {
+        try {
+            // 创建BufferedImage
+            BufferedImage bufferedImage = new BufferedImage(
+                image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = bufferedImage.createGraphics();
+            g2d.drawImage(image, 0, 0, null);
+            g2d.dispose();
+
+            // 转换为PNG格式的字节数组
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(bufferedImage, "PNG", outputStream);
+            byte[] imageBytes = outputStream.toByteArray();
+
+            // 转换为Base64
+            String base64 = Base64.getEncoder().encodeToString(imageBytes);
+            return "data:image/png;base64," + base64;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "图片转换失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 判断是否为图片文件
+     */
+    private boolean isImageFile(String path) {
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
+        String lowerPath = path.toLowerCase();
+        return lowerPath.endsWith(".png") || lowerPath.endsWith(".jpg") ||
+               lowerPath.endsWith(".jpeg") || lowerPath.endsWith(".gif") ||
+               lowerPath.endsWith(".bmp");
     }
 
     /**

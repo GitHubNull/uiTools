@@ -4,7 +4,9 @@
       "Bash(mvn:*)",
       "Bash(java -jar target/uiTools-1.1.8.jar:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(java:*)",
+      "Bash(javac -cp:*)"
     ],
     "deny": [],
     "ask": []

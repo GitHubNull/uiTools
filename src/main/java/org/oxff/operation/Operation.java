@@ -24,4 +24,21 @@ public interface Operation {
      * @return 显示名称
      */
     String getDisplayName();
+
+    /**
+     * 判断是否返回图片数据
+     * @return true 如果操作返回图片数据，false 如果返回文本数据
+     */
+    default boolean returnsImage() {
+        return false;
+    }
+
+    /**
+     * 获取图片数据（当returnsImage为true时）
+     * @param input 输入字符串
+     * @return 图片数据的Base64编码（data URL格式）
+     */
+    default String getImageData(String input) {
+        return null;
+    }
 }
