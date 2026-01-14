@@ -7,7 +7,10 @@
       "Bash(git commit:*)",
       "Bash(java:*)",
       "Bash(javac -cp:*)",
-      "mcp__zai-mcp-server__analyze_image"
+      "mcp__zai-mcp-server__analyze_image",
+      "Bash(tree:*)",
+      "Bash(grep:*)",
+      "Bash(ls -la:*)"
     ],
     "deny": [],
     "ask": []
