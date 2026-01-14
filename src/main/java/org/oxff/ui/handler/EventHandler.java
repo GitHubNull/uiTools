@@ -110,6 +110,12 @@ public class EventHandler {
         OperationExecutionContext context = builder.build();
 
         try {
+            // 执行前：记录操作提示到日志
+            String hints = OperationFactory.getOperationHints(selectedOperation);
+            if (hints != null && !hints.isEmpty()) {
+                logManager.log(hints);
+            }
+
             OperationExecutor.ExecutionResult result = operationExecutor.execute(context);
 
             // 显示结果

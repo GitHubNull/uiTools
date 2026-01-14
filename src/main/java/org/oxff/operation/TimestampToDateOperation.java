@@ -16,7 +16,7 @@ public class TimestampToDateOperation implements Operation {
     @Override
     public String execute(String input) {
         if (input == null || input.trim().isEmpty()) {
-            return "请输入时间戳\n\n支持的格式：\n- 秒级时间戳（10位）：1712345678\n- 毫秒级时间戳（13位）：1712345678900\n- 支持自定义格式，第二行输入格式";
+            return "错误：请输入时间戳（10或13位数字）";
         }
 
         String timestampStr = "";
@@ -59,26 +59,12 @@ public class TimestampToDateOperation implements Operation {
             // 格式化日期
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
             String formattedDate = dateTime.format(formatter);
+            String utcFormatted = instant.atZone(ZoneId.of("UTC")).format(formatter);
 
-            // 构建结果
-            StringBuilder result = new StringBuilder();
-            result.append("输入时间戳: ").append(timestampStr).append("\n");
-            result.append("时间戳类型: ").append(isMilliseconds ? "毫秒级" : "秒级").append("\n");
-            result.append("使用格式: ").append(format).append("\n");
-            result.append("本地时间: ").append(formattedDate).append("\n");
-            result.append("UTC时间: ").append(instant.atZone(ZoneId.of("UTC")).format(formatter)).append("\n");
-            result.append("\n提示：\n");
-            result.append("- 如需使用UTC时区，请使用UTC时间戳转换操作\n");
-            result.append("- 支持自定义格式，第二行输入格式如：yyyy/MM/dd HH:mm:ss");
-
-            return result.toString();
+            return formattedDate + " (本地)\n" + utcFormatted + " (UTC)";
 
         } catch (NumberFormatException e) {
-            return "时间戳格式错误\n\n输入的时间戳: " + timestampStr + "\n\n" +
-                   "支持的格式：\n" +
-                   "- 秒级时间戳：10位数字，如1712345678\n" +
-                   "- 毫秒级时间戳：13位数字，如1712345678900\n\n" +
-                   "使用方法：第一行输入时间戳，第二行输入格式（可选）";
+            return "时间戳格式错误: " + timestampStr + "\n\n支持的格式：10或13位数字";
         } catch (Exception e) {
             return "时间戳转换失败: " + e.getMessage();
         }

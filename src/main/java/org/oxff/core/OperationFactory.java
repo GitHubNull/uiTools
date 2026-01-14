@@ -38,7 +38,10 @@ public class OperationFactory {
             new TimestampToDateOperation(),
             new TimestampFormatOperation(),
             new TimestampToUtcOperation(),
-            new TimestampFromUtcOperation()
+            new TimestampFromUtcOperation(),
+            // JWT操作
+            new JwtEncodeOperation(),
+            new JwtDecodeOperation()
         };
         
         // 按名称映射操作
@@ -66,5 +69,39 @@ public class OperationFactory {
 
     public static List<Operation> getOperationsByCategory(OperationCategory category) {
         return Collections.unmodifiableList(operationsByCategory.get(category));
+    }
+
+    /**
+     * 获取操作的提示信息（用于日志显示）
+     */
+    public static String getOperationHints(String operationName) {
+        switch (operationName) {
+            case "JWT解码":
+                return "JWT解码提示: 可在token后添加空格和密钥进行签名验证. HMAC算法密钥应为Base64编码, RSA/EC算法公钥应为X.509格式Base64编码";
+
+            case "JWT编码":
+                return "JWT编码提示: 密钥应使用Base64编码. RSA/EC算法密钥应为PKCS#8格式私钥";
+
+            case "时间戳转日期":
+                return "时间戳转日期提示: 支持秒级(10位)或毫秒级(13位)时间戳. 第二行可输入自定义格式, 如: yyyy/MM/dd HH:mm:ss";
+
+            case "日期转时间戳":
+                return "日期转时间戳提示: 第一行输入日期, 第二行可输入自定义格式. 默认格式: yyyy-MM-dd HH:mm:ss";
+
+            case "时间戳格式化":
+                return "时间戳格式化提示: 第一行输入时间戳, 第二行输入目标格式. 如: yyyy/MM/dd HH:mm:ss";
+
+            case "时间戳转UTC时间":
+                return "时间戳转UTC时间提示: 将时间戳转换为UTC时间和本地时间对比";
+
+            case "UTC时间转时间戳":
+                return "UTC时间转时间戳提示: 输入UTC时间将被视为UTC时区. 第一行输入时间, 第二行可输入自定义格式";
+
+            case "当前时间戳":
+                return "当前时间戳提示: 可通过上方下拉框切换不同时区";
+
+            default:
+                return null;
+        }
     }
 }

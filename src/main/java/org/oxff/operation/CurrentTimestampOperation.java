@@ -59,26 +59,7 @@ public class CurrentTimestampOperation implements Operation {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String formattedTime = targetDateTime.format(formatter);
 
-            // 构建结果
-            StringBuilder result = new StringBuilder();
-            result.append("当前时间戳（毫秒级）: ").append(currentTimeMillis).append("\n");
-            result.append("当前时间戳（秒级）: ").append(currentTimeSeconds).append("\n");
-            result.append("当前时间（").append(zoneDisplayName).append("）: ").append(formattedTime).append("\n");
-
-            // 如果是系统时区，也显示UTC时间作为对比
-            if (targetZoneId == null || targetZoneId.isEmpty()) {
-                ZonedDateTime utcDateTime = instant.atZone(ZoneId.of("UTC"));
-                String utcTime = utcDateTime.format(formatter);
-                result.append("当前时间（UTC）: ").append(utcTime).append("\n");
-            }
-
-            result.append("\n提示：\n");
-            result.append("- 毫秒级时间戳：13位，如").append(currentTimeMillis).append("\n");
-            result.append("- 秒级时间戳：10位，如").append(currentTimeSeconds).append("\n");
-            result.append("- 可通过上方下拉框切换不同时区\n");
-            result.append("- 可通过其他时间戳操作进行格式转换");
-
-            return result.toString();
+            return currentTimeMillis + "\n" + currentTimeSeconds + "\n" + formattedTime;
 
         } catch (Exception e) {
             return "获取当前时间戳失败: " + e.getMessage();

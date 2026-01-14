@@ -16,7 +16,7 @@ public class TimestampFromDateOperation implements Operation {
     @Override
     public String execute(String input) {
         if (input == null || input.trim().isEmpty()) {
-            return "请输入日期字符串，格式如：2024-01-13 15:30:00\n\n支持格式：\n- yyyy-MM-dd HH:mm:ss\n- yyyy-MM-dd\n- 自定义格式（在第二行输入格式）";
+            return "错误：请输入日期和格式";
         }
 
         try {
@@ -54,29 +54,10 @@ public class TimestampFromDateOperation implements Operation {
             long epochMilli = zonedDateTime.toInstant().toEpochMilli();
             long epochSecond = epochMilli / 1000;
 
-            // 构建结果
-            StringBuilder result = new StringBuilder();
-            result.append("输入日期: ").append(dateString).append("\n");
-            result.append("使用格式: ").append(format).append("\n");
-            result.append("本地时区: ").append(ZoneId.systemDefault()).append("\n\n");
-            result.append("毫秒级时间戳: ").append(epochMilli).append("\n");
-            result.append("秒级时间戳: ").append(epochSecond).append("\n");
-            result.append("\n提示：\n");
-            result.append("- 如需使用UTC时区，请使用UTC时间戳转换操作\n");
-            result.append("- 支持自定义格式，第二行输入格式如：yyyy/MM/dd HH:mm");
-
-            return result.toString();
+            return epochMilli + " (毫秒)\n" + epochSecond + " (秒)";
 
         } catch (DateTimeParseException e) {
-            return "日期解析失败，请检查格式是否正确\n\n输入的日期: " + input.trim().split("\n")[0] + "\n" +
-                   "尝试的格式: " + (input.contains("\n") && input.split("\n").length > 1 ?
-                   input.split("\n")[1].trim() : "yyyy-MM-dd HH:mm:ss") + "\n\n" +
-                   "支持的格式示例：\n" +
-                   "- 2024-01-13 15:30:00 (格式: yyyy-MM-dd HH:mm:ss)\n" +
-                   "- 2024-01-13 (格式: yyyy-MM-dd)\n" +
-                   "- 2024/01/13 15:30:00 (格式: yyyy/MM/dd HH:mm:ss)\n" +
-                   "- 13-01-2024 (格式: dd-MM-yyyy)\n\n" +
-                   "使用方法：第一行输入日期，第二行输入格式（可选）";
+            return "日期格式错误";
         } catch (Exception e) {
             return "日期转换失败: " + e.getMessage();
         }

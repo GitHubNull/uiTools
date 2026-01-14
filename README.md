@@ -2,9 +2,15 @@
 
 一个功能强大的基于Java Swing的图形界面工具，集成了多种开发者常用功能，包括字符串格式化、编解码、哈希计算、时间戳转换、二维码生成与解析、自动化输入等。
 
-**版本**: v1.5.0
+**版本**: v1.6.0
 
 ## ✨ 核心特性
+
+### 🔐 JWT工具 (v1.6.0+)
+- **JWT编码**: 生成JWT token，支持多种签名算法（HS256/HS384/HS512, RS256/RS384/RS512, ES256/ES384/ES512）
+- **JWT解码**: 解析JWT token，显示Header、Payload和签名部分
+- **算法支持**: HMAC对称加密、RSA非对称加密、ECDSA非对称加密
+- **简洁输出**: 输出区域只显示核心结果，辅助信息显示在日志区域
 
 ### 📊 格式化与数据提取
 - **JSON格式化**: 将压缩的JSON字符串格式化，支持JSONPath表达式精准提取数据
@@ -23,12 +29,13 @@
 - **SHA1哈希**: 生成SHA1散列值
 - **SHA256哈希**: 生成SHA256散列值
 
-### ⏰ 时间戳工具 (v1.4.0+)
+### ⏰ 时间戳工具 (v1.6.0+)
 - **获取当前时间戳**: 支持毫秒级和秒级时间戳
 - **时区支持**: 支持系统时区、UTC及其他时区选择
 - **日期时间互转**: 在日期字符串和时间戳之间转换
 - **时间戳格式化**: 自定义时间戳格式化输出
 - **UTC时间转换**: 本地时间与UTC时间互转
+- **简洁输出**: 输出区域只显示核心转换结果，辅助信息显示在日志区域
 
 ### 📱 二维码工具 (v1.3.0+)
 - **二维码生成**: 将文本生成为二维码图片
@@ -64,6 +71,7 @@
 - **Jayway JsonPath 2.8.0** (JSONPath表达式引擎)
 - **Jaxen 1.2.0** (XPath表达式引擎，dom4j依赖)
 - **Apache Commons Codec 1.16.0** (Base64/Base32等编解码实现)
+- **JJWT 0.12.3** (JWT生成与解析库)
 - **FlatLaf 3.2.5** (现代化Swing界面主题库)
 - **RSyntaxTextArea 3.3.3** (增强型文本编辑器，支持语法高亮)
 - **Google ZXing 3.5.2** (二维码生成与解析库core+javase)
@@ -92,7 +100,7 @@ mvn exec:java -Dexec.mainClass="org.oxff.Main"
 
 **方式二：运行打包后的JAR文件**
 ```bash
-java -jar target/uiTools-1.5.0.jar
+java -jar target/uiTools-1.6.0.jar
 ```
 
 ## 📖 使用指南
@@ -175,6 +183,63 @@ $.store.book[?(@.category=='fiction')].price    # 提取小说类书籍的价格
 $.store.book[?(@.year>2000)].title      # 提取2000年后出版的书籍
 $.store.book.length()                   # 计算书籍总数
 ```
+
+### 🔐 JWT工具使用
+
+#### JWT编码（生成Token）
+1. 输入JSON格式的配置，包含：
+   - `payload`: JWT claims数据（必填）
+   - `key`: 签名密钥，Base64编码（必填）
+   - `algorithm`: 签名算法，默认HS256（可选）
+   - `typ`: token类型，如"JWT"（可选）
+
+**示例输入**:
+```json
+{
+  "payload": {
+    "sub": "1234567890",
+    "name": "John Doe",
+    "iat": 1516239022
+  },
+  "key": "lDzT89LrYQuHlSypnjMj4tstGRHDuT/wrLndm3tIlds=",
+  "algorithm": "HS256",
+  "typ": "JWT"
+}
+```
+
+**输出**: 生成的JWT token字符串
+
+**支持的算法**:
+- HMAC对称加密: HS256, HS384, HS512
+- RSA非对称加密: RS256, RS384, RS512 (需要PKCS#8格式私钥)
+- ECDSA非对称加密: ES256, ES384, ES512 (需要PKCS#8格式私钥)
+
+#### JWT解码（解析Token）
+1. 输入JWT token字符串
+2. （可选）在token后添加空格和验证密钥进行签名验证
+
+**示例输入**:
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+```
+
+**输出**:
+```json
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+---
+{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "iat": 1516239022
+}
+---
+SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+```
+
+**输出说明**: 分别显示Header、Payload和签名三部分，用`---`分隔
 
 ### ⏰ 时间戳工具使用
 
@@ -414,6 +479,15 @@ A: 检查workflow文件配置，确认secrets设置正确(GITHUB_TOKEN)。查看
 
 ## 📋 更新日志
 
+### v1.6.0 (2026-01-14)
+- ✨ **新增**: JWT工具集（JWT编码/JWT解码）
+- ✨ **新增**: 支持多种JWT签名算法（HS256/HS384/HS512, RS256/RS384/RS512, ES256/ES384/ES512）
+- ✨ **新增**: 支持自定义JWT header字段（如typ）
+- 🎨 **优化**: 简化JWT和时间戳操作的输出格式，输出区域只显示核心结果
+- 🎨 **增强**: 辅助信息和提示移至日志区域显示
+- 🎨 **修复**: 修复JWT解码输出中换行符显示问题
+- 📦 **依赖**: 添加JJWT库（JWT处理）
+
 ### v1.5.0 (2026-01-14)
 - ✨ **新增**: 时间戳工具集（6个时间戳相关操作）
 - ✨ **新增**: 支持多时区选择和UTC时间转换
@@ -508,6 +582,6 @@ A: 检查workflow文件配置，确认secrets设置正确(GITHUB_TOKEN)。查看
 ---
 
 **最后更新时间**: 2026-01-14
-**当前版本**: v1.5.0
+**当前版本**: v1.6.0
 **Java版本**: 11+
 **许可证**: MIT
