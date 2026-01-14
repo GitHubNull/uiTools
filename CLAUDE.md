@@ -17,7 +17,7 @@ mvn clean package
 mvn exec:java -Dexec.mainClass="org.oxff.Main"
 
 # Run the JAR file directly
-java -jar target/uiTools-1.4.0.jar
+java -jar target/uiTools-1.5.0.jar
 
 # Test build (skip tests)
 mvn clean package -DskipTests
