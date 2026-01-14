@@ -1,7 +1,7 @@
 package org.oxff;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import org.oxff.ui.StringFormatterUI;
+import org.oxff.ui.MainWindow;
 
 import javax.swing.*;
 import java.util.logging.Level;
@@ -17,7 +17,7 @@ public class Main {
 
         SwingUtilities.invokeLater(() -> {
             try {
-                StringFormatterUI frame = new StringFormatterUI();
+                MainWindow frame = new MainWindow();
                 frame.setVisible(true);
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "启动应用程序时发生错误", e);
