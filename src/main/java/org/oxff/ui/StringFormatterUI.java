@@ -65,6 +65,8 @@ public class StringFormatterUI extends JFrame {
     private JPanel imageInputPanel;
     private JPanel timezoneConfigPanel;
     private JPanel automationConfigPanel;
+    private JPanel baseEncodingConfigPanel;
+    private JPanel passwordGeneratorConfigPanel;
     private JPanel expressionPanel;
     private JPanel outputPanel;
     private JLabel imageDisplayLabel;
@@ -283,6 +285,14 @@ public class StringFormatterUI extends JFrame {
         timezoneConfigPanel = createTimezoneConfigPanel();
         configContainerPanel.add(timezoneConfigPanel, "TIMEZONE");
 
+        // Base编码配置面板
+        baseEncodingConfigPanel = createBaseEncodingConfigPanel();
+        configContainerPanel.add(baseEncodingConfigPanel, "BASE_ENCODING");
+
+        // 密码生成器配置面板
+        passwordGeneratorConfigPanel = createPasswordGeneratorConfigPanel();
+        configContainerPanel.add(passwordGeneratorConfigPanel, "PASSWORD_GENERATOR");
+
         // 默认显示空面板
         JPanel emptyPanel = new JPanel();
         configContainerPanel.add(emptyPanel, "EMPTY");
@@ -380,6 +390,471 @@ public class StringFormatterUI extends JFrame {
         panel.add(timezoneComboBox);
 
         return panel;
+    }
+
+    /**
+     * 创建Base编码配置面板
+     */
+    private JPanel createBaseEncodingConfigPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("图片转Base编码配置"));
+
+        // 配置控制面板
+        JPanel configPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        configPanel.add(new JLabel("编码类型:"));
+        JComboBox<String> encodingTypeComboBox = new JComboBox<>(new String[]{
+            "Base64", "Base32"
+        });
+        encodingTypeComboBox.setPreferredSize(new Dimension(100, 25));
+        configPanel.add(encodingTypeComboBox);
+
+        // 文件选择按钮
+        JButton selectFileButton = new JButton("选择图片文件");
+        configPanel.add(Box.createHorizontalStrut(15));
+        configPanel.add(selectFileButton);
+
+        panel.add(configPanel, BorderLayout.NORTH);
+
+        // 文件状态标签
+        JLabel selectedFileLabel = new JLabel("未选择文件");
+        selectedFileLabel.setForeground(Color.GRAY);
+        selectedFileLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        panel.add(selectedFileLabel, BorderLayout.CENTER);
+
+        // 注册组件
+        registry.registerComponent(UIComponentRegistry.BASE_ENCODING_COMBO_BOX, encodingTypeComboBox);
+        registry.registerComponent(UIComponentRegistry.SELECT_FILE_BUTTON, selectFileButton);
+        registry.registerComponent(UIComponentRegistry.SELECTED_FILE_LABEL, selectedFileLabel);
+
+        return panel;
+    }
+
+    /**
+     * 创建密码生成器配置面板
+     */
+    private JPanel createPasswordGeneratorConfigPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("随机密码生成配置"));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        // 第一行: 密码总长度
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(new JLabel("密码总长度:"), gbc);
+
+        gbc.gridx = 1;
+        SpinnerModel lengthModel = new SpinnerNumberModel(16, 4, 128, 1);
+        JSpinner passwordLengthSpinner = new JSpinner(lengthModel);
+        passwordLengthSpinner.setPreferredSize(new Dimension(80, 25));
+        panel.add(passwordLengthSpinner, gbc);
+
+        // 第二行: 数字配置
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JCheckBox includeDigitsCheckBox = new JCheckBox("数字");
+        includeDigitsCheckBox.setSelected(true);
+        panel.add(includeDigitsCheckBox, gbc);
+
+        gbc.gridx = 1;
+        JPanel digitPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        digitPanel.add(new JLabel("个数:"));
+        SpinnerModel digitCountModel = new SpinnerNumberModel(4, 0, 128, 1);
+        JSpinner digitCountSpinner = new JSpinner(digitCountModel);
+        digitCountSpinner.setPreferredSize(new Dimension(60, 25));
+        digitPanel.add(digitCountSpinner);
+        panel.add(digitPanel, gbc);
+
+        // 第三行: 大写字母配置
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        JCheckBox includeUppercaseCheckBox = new JCheckBox("大写字母");
+        includeUppercaseCheckBox.setSelected(true);
+        panel.add(includeUppercaseCheckBox, gbc);
+
+        gbc.gridx = 1;
+        JPanel uppercasePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        uppercasePanel.add(new JLabel("个数:"));
+        SpinnerModel uppercaseCountModel = new SpinnerNumberModel(4, 0, 128, 1);
+        JSpinner uppercaseCountSpinner = new JSpinner(uppercaseCountModel);
+        uppercaseCountSpinner.setPreferredSize(new Dimension(60, 25));
+        uppercasePanel.add(uppercaseCountSpinner);
+        panel.add(uppercasePanel, gbc);
+
+        // 第四行: 小写字母配置
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        JCheckBox includeLowercaseCheckBox = new JCheckBox("小写字母");
+        includeLowercaseCheckBox.setSelected(true);
+        panel.add(includeLowercaseCheckBox, gbc);
+
+        gbc.gridx = 1;
+        JPanel lowercasePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        lowercasePanel.add(new JLabel("个数:"));
+        SpinnerModel lowercaseCountModel = new SpinnerNumberModel(4, 0, 128, 1);
+        JSpinner lowercaseCountSpinner = new JSpinner(lowercaseCountModel);
+        lowercaseCountSpinner.setPreferredSize(new Dimension(60, 25));
+        lowercasePanel.add(lowercaseCountSpinner);
+        panel.add(lowercasePanel, gbc);
+
+        // 第五行: 特殊字符配置
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        JCheckBox includeSpecialCharsCheckBox = new JCheckBox("特殊字符");
+        includeSpecialCharsCheckBox.setSelected(false);
+        panel.add(includeSpecialCharsCheckBox, gbc);
+
+        gbc.gridx = 1;
+        JPanel specialCharPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        specialCharPanel.add(new JLabel("个数:"));
+        SpinnerModel specialCountModel = new SpinnerNumberModel(2, 0, 128, 1);
+        JSpinner specialCharCountSpinner = new JSpinner(specialCountModel);
+        specialCharCountSpinner.setPreferredSize(new Dimension(60, 25));
+        specialCharCountSpinner.setEnabled(false);
+        specialCharPanel.add(specialCharCountSpinner);
+        panel.add(specialCharPanel, gbc);
+
+        // 第六行: 生成个数
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        panel.add(new JLabel("生成个数:"), gbc);
+
+        gbc.gridx = 1;
+        SpinnerModel countModel = new SpinnerNumberModel(1, 1, 100, 1);
+        JSpinner passwordCountSpinner = new JSpinner(countModel);
+        passwordCountSpinner.setPreferredSize(new Dimension(80, 25));
+        panel.add(passwordCountSpinner, gbc);
+
+        // 注册组件
+        registry.registerComponent(UIComponentRegistry.PASSWORD_LENGTH_SPINNER, passwordLengthSpinner);
+        registry.registerComponent(UIComponentRegistry.INCLUDE_DIGITS_CHECK_BOX, includeDigitsCheckBox);
+        registry.registerComponent(UIComponentRegistry.DIGIT_COUNT_SPINNER, digitCountSpinner);
+        registry.registerComponent(UIComponentRegistry.INCLUDE_UPPERCASE_CHECK_BOX, includeUppercaseCheckBox);
+        registry.registerComponent(UIComponentRegistry.UPPERCASE_COUNT_SPINNER, uppercaseCountSpinner);
+        registry.registerComponent(UIComponentRegistry.INCLUDE_LOWERCASE_CHECK_BOX, includeLowercaseCheckBox);
+        registry.registerComponent(UIComponentRegistry.LOWERCASE_COUNT_SPINNER, lowercaseCountSpinner);
+        registry.registerComponent(UIComponentRegistry.INCLUDE_SPECIAL_CHARS_CHECK_BOX, includeSpecialCharsCheckBox);
+        registry.registerComponent(UIComponentRegistry.SPECIAL_CHAR_COUNT_SPINNER, specialCharCountSpinner);
+        registry.registerComponent(UIComponentRegistry.PASSWORD_COUNT_SPINNER, passwordCountSpinner);
+
+        // 动态联动逻辑
+        PasswordConfigListener listener = new PasswordConfigListener(
+            passwordLengthSpinner,
+            includeDigitsCheckBox, digitCountSpinner,
+            includeUppercaseCheckBox, uppercaseCountSpinner,
+            includeLowercaseCheckBox, lowercaseCountSpinner,
+            includeSpecialCharsCheckBox, specialCharCountSpinner
+        );
+
+        // 总长度改变时调整各类型数量
+        passwordLengthSpinner.addChangeListener(e -> listener.onTotalLengthChanged());
+
+        // 数字勾选框改变时
+        includeDigitsCheckBox.addActionListener(e -> listener.onDigitCheckChanged());
+
+        // 数字数量改变时
+        digitCountSpinner.addChangeListener(e -> listener.onDigitCountChanged());
+
+        // 大写字母勾选框改变时
+        includeUppercaseCheckBox.addActionListener(e -> listener.onUppercaseCheckChanged());
+
+        // 大写字母数量改变时
+        uppercaseCountSpinner.addChangeListener(e -> listener.onUppercaseCountChanged());
+
+        // 小写字母勾选框改变时
+        includeLowercaseCheckBox.addActionListener(e -> listener.onLowercaseCheckChanged());
+
+        // 小写字母数量改变时
+        lowercaseCountSpinner.addChangeListener(e -> listener.onLowercaseCountChanged());
+
+        // 特殊字符勾选框改变时
+        includeSpecialCharsCheckBox.addActionListener(e -> listener.onSpecialCharCheckChanged());
+
+        // 特殊字符数量改变时
+        specialCharCountSpinner.addChangeListener(e -> listener.onSpecialCharCountChanged());
+
+        return panel;
+    }
+
+    /**
+     * 密码配置动态联动监听器
+     */
+    private class PasswordConfigListener {
+        private final JSpinner totalLengthSpinner;
+        private final JCheckBox includeDigitsCheckBox;
+        private final JSpinner digitCountSpinner;
+        private final JCheckBox includeUppercaseCheckBox;
+        private final JSpinner uppercaseCountSpinner;
+        private final JCheckBox includeLowercaseCheckBox;
+        private final JSpinner lowercaseCountSpinner;
+        private final JCheckBox includeSpecialCharsCheckBox;
+        private final JSpinner specialCharCountSpinner;
+
+        private boolean isUpdating = false;
+
+        public PasswordConfigListener(JSpinner totalLengthSpinner,
+                                      JCheckBox includeDigitsCheckBox, JSpinner digitCountSpinner,
+                                      JCheckBox includeUppercaseCheckBox, JSpinner uppercaseCountSpinner,
+                                      JCheckBox includeLowercaseCheckBox, JSpinner lowercaseCountSpinner,
+                                      JCheckBox includeSpecialCharsCheckBox, JSpinner specialCharCountSpinner) {
+            this.totalLengthSpinner = totalLengthSpinner;
+            this.includeDigitsCheckBox = includeDigitsCheckBox;
+            this.digitCountSpinner = digitCountSpinner;
+            this.includeUppercaseCheckBox = includeUppercaseCheckBox;
+            this.uppercaseCountSpinner = uppercaseCountSpinner;
+            this.includeLowercaseCheckBox = includeLowercaseCheckBox;
+            this.lowercaseCountSpinner = lowercaseCountSpinner;
+            this.includeSpecialCharsCheckBox = includeSpecialCharsCheckBox;
+            this.specialCharCountSpinner = specialCharCountSpinner;
+        }
+
+        private int getTotalLength() {
+            return (Integer) totalLengthSpinner.getValue();
+        }
+
+        private int getDigitCount() {
+            return includeDigitsCheckBox.isSelected() ? (Integer) digitCountSpinner.getValue() : 0;
+        }
+
+        private int getUppercaseCount() {
+            return includeUppercaseCheckBox.isSelected() ? (Integer) uppercaseCountSpinner.getValue() : 0;
+        }
+
+        private int getLowercaseCount() {
+            return includeLowercaseCheckBox.isSelected() ? (Integer) lowercaseCountSpinner.getValue() : 0;
+        }
+
+        private int getSpecialCharCount() {
+            return includeSpecialCharsCheckBox.isSelected() ? (Integer) specialCharCountSpinner.getValue() : 0;
+        }
+
+        private int getCurrentTotal() {
+            return getDigitCount() + getUppercaseCount() + getLowercaseCount() + getSpecialCharCount();
+        }
+
+        public void onTotalLengthChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+
+            int newTotal = getTotalLength();
+            int currentTotal = getCurrentTotal();
+
+            if (currentTotal == 0) {
+                // 如果没有选择任何类型，默认全部使用小写字母
+                includeLowercaseCheckBox.setSelected(true);
+                lowercaseCountSpinner.setValue(newTotal);
+            } else if (currentTotal != newTotal) {
+                // 按比例调整各类型数量
+                double ratio = (double) newTotal / currentTotal;
+
+                adjustDigitCount(newTotal, ratio);
+                adjustUppercaseCount(newTotal, ratio);
+                adjustLowercaseCount(newTotal, ratio);
+                adjustSpecialCharCount(newTotal, ratio);
+
+                // 确保总和等于总长度
+                balanceCounts();
+            }
+
+            isUpdating = false;
+        }
+
+        public void onDigitCheckChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+
+            digitCountSpinner.setEnabled(includeDigitsCheckBox.isSelected());
+
+            if (includeDigitsCheckBox.isSelected() && (Integer) digitCountSpinner.getValue() == 0) {
+                digitCountSpinner.setValue(1);
+            }
+
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        public void onDigitCountChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        public void onUppercaseCheckChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+
+            uppercaseCountSpinner.setEnabled(includeUppercaseCheckBox.isSelected());
+
+            if (includeUppercaseCheckBox.isSelected() && (Integer) uppercaseCountSpinner.getValue() == 0) {
+                uppercaseCountSpinner.setValue(1);
+            }
+
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        public void onUppercaseCountChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        public void onLowercaseCheckChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+
+            lowercaseCountSpinner.setEnabled(includeLowercaseCheckBox.isSelected());
+
+            if (includeLowercaseCheckBox.isSelected() && (Integer) lowercaseCountSpinner.getValue() == 0) {
+                lowercaseCountSpinner.setValue(1);
+            }
+
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        public void onLowercaseCountChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        public void onSpecialCharCheckChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+
+            specialCharCountSpinner.setEnabled(includeSpecialCharsCheckBox.isSelected());
+
+            if (includeSpecialCharsCheckBox.isSelected() && (Integer) specialCharCountSpinner.getValue() == 0) {
+                specialCharCountSpinner.setValue(1);
+            }
+
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        public void onSpecialCharCountChanged() {
+            if (isUpdating) return;
+            isUpdating = true;
+            balanceCounts();
+            isUpdating = false;
+        }
+
+        private void adjustDigitCount(int totalLength, double ratio) {
+            if (includeDigitsCheckBox.isSelected()) {
+                int newCount = Math.max(1, (int) Math.round(getDigitCount() * ratio));
+                digitCountSpinner.setValue(Math.min(newCount, totalLength));
+            }
+        }
+
+        private void adjustUppercaseCount(int totalLength, double ratio) {
+            if (includeUppercaseCheckBox.isSelected()) {
+                int newCount = Math.max(1, (int) Math.round(getUppercaseCount() * ratio));
+                uppercaseCountSpinner.setValue(Math.min(newCount, totalLength));
+            }
+        }
+
+        private void adjustLowercaseCount(int totalLength, double ratio) {
+            if (includeLowercaseCheckBox.isSelected()) {
+                int newCount = Math.max(1, (int) Math.round(getLowercaseCount() * ratio));
+                lowercaseCountSpinner.setValue(Math.min(newCount, totalLength));
+            }
+        }
+
+        private void adjustSpecialCharCount(int totalLength, double ratio) {
+            if (includeSpecialCharsCheckBox.isSelected()) {
+                int newCount = Math.max(1, (int) Math.round(getSpecialCharCount() * ratio));
+                specialCharCountSpinner.setValue(Math.min(newCount, totalLength));
+            }
+        }
+
+        private void balanceCounts() {
+            int totalLength = getTotalLength();
+            int currentTotal = getCurrentTotal();
+
+            if (currentTotal == 0) {
+                // 如果没有选择任何类型，默认使用小写字母
+                includeLowercaseCheckBox.setSelected(true);
+                lowercaseCountSpinner.setValue(totalLength);
+                return;
+            }
+
+            int diff = totalLength - currentTotal;
+
+            if (diff > 0) {
+                // 需要增加
+                distributeExtra(diff);
+            } else if (diff < 0) {
+                // 需要减少
+                reduceCount(-diff);
+            }
+        }
+
+        private void distributeExtra(int extra) {
+            while (extra > 0) {
+                // 优先分配给小写字母
+                if (includeLowercaseCheckBox.isSelected()) {
+                    lowercaseCountSpinner.setValue((Integer) lowercaseCountSpinner.getValue() + 1);
+                    extra--;
+                    continue;
+                }
+                // 然后大写字母
+                if (includeUppercaseCheckBox.isSelected()) {
+                    uppercaseCountSpinner.setValue((Integer) uppercaseCountSpinner.getValue() + 1);
+                    extra--;
+                    continue;
+                }
+                // 然后数字
+                if (includeDigitsCheckBox.isSelected()) {
+                    digitCountSpinner.setValue((Integer) digitCountSpinner.getValue() + 1);
+                    extra--;
+                    continue;
+                }
+                // 最后特殊字符
+                if (includeSpecialCharsCheckBox.isSelected()) {
+                    specialCharCountSpinner.setValue((Integer) specialCharCountSpinner.getValue() + 1);
+                    extra--;
+                    continue;
+                }
+                break;
+            }
+        }
+
+        private void reduceCount(int reduce) {
+            while (reduce > 0) {
+                // 优先从特殊字符减少
+                if (includeSpecialCharsCheckBox.isSelected() && (Integer) specialCharCountSpinner.getValue() > 1) {
+                    specialCharCountSpinner.setValue((Integer) specialCharCountSpinner.getValue() - 1);
+                    reduce--;
+                    continue;
+                }
+                // 然后从数字减少
+                if (includeDigitsCheckBox.isSelected() && (Integer) digitCountSpinner.getValue() > 1) {
+                    digitCountSpinner.setValue((Integer) digitCountSpinner.getValue() - 1);
+                    reduce--;
+                    continue;
+                }
+                // 然后从大写字母减少
+                if (includeUppercaseCheckBox.isSelected() && (Integer) uppercaseCountSpinner.getValue() > 1) {
+                    uppercaseCountSpinner.setValue((Integer) uppercaseCountSpinner.getValue() - 1);
+                    reduce--;
+                    continue;
+                }
+                // 最后从小写字母减少
+                if (includeLowercaseCheckBox.isSelected() && (Integer) lowercaseCountSpinner.getValue() > 1) {
+                    lowercaseCountSpinner.setValue((Integer) lowercaseCountSpinner.getValue() - 1);
+                    reduce--;
+                    continue;
+                }
+                break;
+            }
+        }
     }
 
     /**
@@ -555,6 +1030,12 @@ public class StringFormatterUI extends JFrame {
 
         // 粘贴图片按钮事件
         pasteImageButton.addActionListener(e -> eventHandler.handlePasteImage(this));
+
+        // Base编码配置面板 - 选择文件按钮事件
+        JButton selectFileButton = registry.getComponent(UIComponentRegistry.SELECT_FILE_BUTTON);
+        if (selectFileButton != null) {
+            selectFileButton.addActionListener(e -> eventHandler.handleSelectFileForBaseEncoding(this));
+        }
 
         // 复制输入按钮事件
         copyInputButton.addActionListener(e -> eventHandler.handleCopyInput());

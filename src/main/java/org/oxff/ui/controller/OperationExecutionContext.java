@@ -11,6 +11,8 @@ public class OperationExecutionContext {
     private final AutomationConfig automationConfig;
     private final String timezoneSelection;
     private final String imagePath;
+    private final BaseEncodingConfig baseEncodingConfig;
+    private final PasswordGeneratorConfig passwordGeneratorConfig;
 
     private OperationExecutionContext(Builder builder) {
         this.operationName = builder.operationName;
@@ -19,6 +21,8 @@ public class OperationExecutionContext {
         this.automationConfig = builder.automationConfig;
         this.timezoneSelection = builder.timezoneSelection;
         this.imagePath = builder.imagePath;
+        this.baseEncodingConfig = builder.baseEncodingConfig;
+        this.passwordGeneratorConfig = builder.passwordGeneratorConfig;
     }
 
     public String getOperationName() {
@@ -49,6 +53,14 @@ public class OperationExecutionContext {
         return imagePath;
     }
 
+    public BaseEncodingConfig getBaseEncodingConfig() {
+        return baseEncodingConfig;
+    }
+
+    public PasswordGeneratorConfig getPasswordGeneratorConfig() {
+        return passwordGeneratorConfig;
+    }
+
     /**
      * 构建器模式创建上下文对象
      */
@@ -59,6 +71,8 @@ public class OperationExecutionContext {
         private AutomationConfig automationConfig;
         private String timezoneSelection;
         private String imagePath;
+        private BaseEncodingConfig baseEncodingConfig;
+        private PasswordGeneratorConfig passwordGeneratorConfig;
 
         public Builder operationName(String operationName) {
             this.operationName = operationName;
@@ -87,6 +101,16 @@ public class OperationExecutionContext {
 
         public Builder imagePath(String imagePath) {
             this.imagePath = imagePath;
+            return this;
+        }
+
+        public Builder baseEncodingConfig(BaseEncodingConfig baseEncodingConfig) {
+            this.baseEncodingConfig = baseEncodingConfig;
+            return this;
+        }
+
+        public Builder passwordGeneratorConfig(PasswordGeneratorConfig passwordGeneratorConfig) {
+            this.passwordGeneratorConfig = passwordGeneratorConfig;
             return this;
         }
 
@@ -119,6 +143,95 @@ public class OperationExecutionContext {
 
         public boolean isUseClipboard() {
             return useClipboard;
+        }
+    }
+
+    /**
+     * Base编码配置
+     */
+    public static class BaseEncodingConfig {
+        private final String encodingType;  // "Base64" 或 "Base32"
+
+        public BaseEncodingConfig(String encodingType) {
+            this.encodingType = encodingType;
+        }
+
+        public String getEncodingType() {
+            return encodingType;
+        }
+    }
+
+    /**
+     * 密码生成器配置
+     */
+    public static class PasswordGeneratorConfig {
+        private final int passwordLength;
+        private final boolean includeDigits;
+        private final int digitCount;
+        private final boolean includeUppercase;
+        private final int uppercaseCount;
+        private final boolean includeLowercase;
+        private final int lowercaseCount;
+        private final boolean includeSpecialChars;
+        private final int specialCharCount;
+        private final int passwordCount;
+
+        public PasswordGeneratorConfig(int passwordLength,
+                                       boolean includeDigits, int digitCount,
+                                       boolean includeUppercase, int uppercaseCount,
+                                       boolean includeLowercase, int lowercaseCount,
+                                       boolean includeSpecialChars, int specialCharCount,
+                                       int passwordCount) {
+            this.passwordLength = passwordLength;
+            this.includeDigits = includeDigits;
+            this.digitCount = digitCount;
+            this.includeUppercase = includeUppercase;
+            this.uppercaseCount = uppercaseCount;
+            this.includeLowercase = includeLowercase;
+            this.lowercaseCount = lowercaseCount;
+            this.includeSpecialChars = includeSpecialChars;
+            this.specialCharCount = specialCharCount;
+            this.passwordCount = passwordCount;
+        }
+
+        public int getPasswordLength() {
+            return passwordLength;
+        }
+
+        public boolean isIncludeDigits() {
+            return includeDigits;
+        }
+
+        public int getDigitCount() {
+            return digitCount;
+        }
+
+        public boolean isIncludeUppercase() {
+            return includeUppercase;
+        }
+
+        public int getUppercaseCount() {
+            return uppercaseCount;
+        }
+
+        public boolean isIncludeLowercase() {
+            return includeLowercase;
+        }
+
+        public int getLowercaseCount() {
+            return lowercaseCount;
+        }
+
+        public boolean isIncludeSpecialChars() {
+            return includeSpecialChars;
+        }
+
+        public int getSpecialCharCount() {
+            return specialCharCount;
+        }
+
+        public int getPasswordCount() {
+            return passwordCount;
         }
     }
 }

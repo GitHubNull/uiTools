@@ -47,6 +47,23 @@ public class UIComponentRegistry {
     public static final String INPUT_SOURCE_RADIO = "inputSourceRadio";
     public static final String CLIPBOARD_SOURCE_RADIO = "clipboardSourceRadio";
 
+    // Base编码配置相关组件
+    public static final String BASE_ENCODING_COMBO_BOX = "baseEncodingComboBox";
+    public static final String SELECT_FILE_BUTTON = "selectFileButton";
+    public static final String SELECTED_FILE_LABEL = "selectedFileLabel";
+
+    // 密码生成器配置相关组件
+    public static final String PASSWORD_LENGTH_SPINNER = "passwordLengthSpinner";
+    public static final String INCLUDE_DIGITS_CHECK_BOX = "includeDigitsCheckBox";
+    public static final String DIGIT_COUNT_SPINNER = "digitCountSpinner";
+    public static final String INCLUDE_UPPERCASE_CHECK_BOX = "includeUppercaseCheckBox";
+    public static final String UPPERCASE_COUNT_SPINNER = "uppercaseCountSpinner";
+    public static final String INCLUDE_LOWERCASE_CHECK_BOX = "includeLowercaseCheckBox";
+    public static final String LOWERCASE_COUNT_SPINNER = "lowercaseCountSpinner";
+    public static final String INCLUDE_SPECIAL_CHARS_CHECK_BOX = "includeSpecialCharsCheckBox";
+    public static final String SPECIAL_CHAR_COUNT_SPINNER = "specialCharCountSpinner";
+    public static final String PASSWORD_COUNT_SPINNER = "passwordCountSpinner";
+
     /**
      * 注册组件
      * @param name 组件名称

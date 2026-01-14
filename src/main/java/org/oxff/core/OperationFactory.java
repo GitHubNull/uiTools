@@ -41,7 +41,10 @@ public class OperationFactory {
             new TimestampFromUtcOperation(),
             // JWT操作
             new JwtEncodeOperation(),
-            new JwtDecodeOperation()
+            new JwtDecodeOperation(),
+            // 图片和生成工具操作
+            new ImageToBaseOperation(),
+            new RandomPasswordOperation()
         };
         
         // 按名称映射操作

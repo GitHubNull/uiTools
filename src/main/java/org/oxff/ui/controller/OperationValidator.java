@@ -78,8 +78,8 @@ public class OperationValidator {
             return false;
         }
 
-        // "获取当前时间戳" 可以在无输入时执行
-        return "获取当前时间戳".equals(operationName);
+        // "获取当前时间戳" 和 "生成随机密码" 可以在无输入时执行
+        return "获取当前时间戳".equals(operationName) || "生成随机密码".equals(operationName);
     }
 
     /**
@@ -94,6 +94,42 @@ public class OperationValidator {
 
         // "获取当前时间戳" 需要时区选择
         return "获取当前时间戳".equals(operationName);
+    }
+
+    /**
+     * 检查操作是否需要Base编码配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要Base编码配置面板，否则返回 false
+     */
+    public boolean requiresBaseEncodingConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        Operation operation = OperationFactory.getOperation(operationName);
+        if (operation == null) {
+            return false;
+        }
+
+        return "ImageToBaseOperation".equals(operation.getClass().getSimpleName());
+    }
+
+    /**
+     * 检查操作是否需要密码生成器配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要密码生成器配置面板，否则返回 false
+     */
+    public boolean requiresPasswordGeneratorConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        Operation operation = OperationFactory.getOperation(operationName);
+        if (operation == null) {
+            return false;
+        }
+
+        return "RandomPasswordOperation".equals(operation.getClass().getSimpleName());
     }
 
     /**

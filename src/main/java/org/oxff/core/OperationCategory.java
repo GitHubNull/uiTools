@@ -9,7 +9,8 @@ public enum OperationCategory {
     HASHING("哈希"),
     AUTOMATION("自动化操作"),
     QRCODE("二维码"),
-    TIMESTAMP("时间戳");
+    TIMESTAMP("时间戳"),
+    GENERATOR("生成工具");
 
     private final String displayName;
 

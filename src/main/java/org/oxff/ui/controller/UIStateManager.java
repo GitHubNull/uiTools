@@ -67,6 +67,8 @@ public class UIStateManager {
     public void updateImageInputPanelVisibility(String operationName) {
         boolean showImageInputPanel = validator.requiresImageInput(operationName);
         boolean showTimezonePanel = validator.requiresTimezoneSelection(operationName);
+        boolean showBaseEncodingConfigPanel = validator.requiresBaseEncodingConfig(operationName);
+        boolean showPasswordGeneratorConfigPanel = validator.requiresPasswordGeneratorConfig(operationName);
 
         RSyntaxTextArea inputTextArea = registry.getInputTextArea();
 
@@ -84,6 +86,20 @@ public class UIStateManager {
             inputTextArea.setEnabled(false);
             inputTextArea.setBackground(Color.LIGHT_GRAY);
             inputTextArea.setText("请使用下方的时区选择功能选择时区");
+        } else if (showBaseEncodingConfigPanel) {
+            // 切换到Base编码配置面板
+            switchConfigPanel("BASE_ENCODING");
+            // 禁用文本输入区域
+            inputTextArea.setEnabled(false);
+            inputTextArea.setBackground(Color.LIGHT_GRAY);
+            inputTextArea.setText("请使用下方的文件选择功能选择图片文件");
+        } else if (showPasswordGeneratorConfigPanel) {
+            // 切换到密码生成器配置面板
+            switchConfigPanel("PASSWORD_GENERATOR");
+            // 禁用文本输入区域
+            inputTextArea.setEnabled(false);
+            inputTextArea.setBackground(Color.LIGHT_GRAY);
+            inputTextArea.setText("请使用下方的配置面板设置密码生成规则");
         } else {
             // 切换到空面板
             switchConfigPanel("EMPTY");
@@ -92,7 +108,9 @@ public class UIStateManager {
             inputTextArea.setBackground(Color.WHITE);
             String currentText = inputTextArea.getText();
             if ("请使用下方的图片选择功能选择二维码图片文件".equals(currentText) ||
-                "请使用下方的时区选择功能选择时区".equals(currentText)) {
+                "请使用下方的时区选择功能选择时区".equals(currentText) ||
+                "请使用下方的文件选择功能选择图片文件".equals(currentText) ||
+                "请使用下方的配置面板设置密码生成规则".equals(currentText)) {
                 inputTextArea.setText("");
             }
         }

@@ -46,6 +46,16 @@ public class OperationExecutor {
             handleAutomationConfig(operation, context.getAutomationConfig());
         }
 
+        // 配置Base编码操作
+        if (validator.requiresBaseEncodingConfig(operationName) && context.getBaseEncodingConfig() != null) {
+            handleBaseEncodingConfig(operation, context.getBaseEncodingConfig());
+        }
+
+        // 配置密码生成器操作
+        if (validator.requiresPasswordGeneratorConfig(operationName) && context.getPasswordGeneratorConfig() != null) {
+            handlePasswordGeneratorConfig(operation, context.getPasswordGeneratorConfig());
+        }
+
         long startTime = System.currentTimeMillis();
         String result;
 
@@ -86,6 +96,15 @@ public class OperationExecutor {
             return inputText;
         }
 
+        // 对于Base编码配置操作，使用图片文件路径
+        if (validator.requiresBaseEncodingConfig(operationName)) {
+            if (context.getImagePath() != null && !context.getImagePath().isEmpty()) {
+                return context.getImagePath();
+            }
+            // 否则使用输入框中的内容
+            return inputText;
+        }
+
         // 对于"获取当前时间戳"操作，使用时区选择器的值
         if (validator.requiresTimezoneSelection(operationName)) {
             return context.getTimezoneSelection() != null ? context.getTimezoneSelection() : "";
@@ -112,6 +131,58 @@ public class OperationExecutor {
             setClipboardMethod.invoke(operation, config.isUseClipboard());
         } catch (Exception e) {
             throw new Exception("设置自动化配置失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 处理Base编码配置
+     * @param operation 操作对象
+     * @param config Base编码配置
+     * @throws Exception 反射调用失败时抛出异常
+     */
+    public void handleBaseEncodingConfig(Operation operation, OperationExecutionContext.BaseEncodingConfig config)
+            throws Exception {
+        try {
+            Method method = operation.getClass().getMethod("setEncodingType", String.class);
+            method.invoke(operation, config.getEncodingType());
+        } catch (Exception e) {
+            throw new Exception("设置Base编码配置失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 处理密码生成器配置
+     * @param operation 操作对象
+     * @param config 密码生成器配置
+     * @throws Exception 反射调用失败时抛出异常
+     */
+    public void handlePasswordGeneratorConfig(Operation operation,
+                                               OperationExecutionContext.PasswordGeneratorConfig config)
+            throws Exception {
+        try {
+            Method setLengthMethod = operation.getClass().getMethod("setPasswordLength", int.class);
+            Method setIncludeDigitsMethod = operation.getClass().getMethod("setIncludeDigits", boolean.class);
+            Method setDigitCountMethod = operation.getClass().getMethod("setDigitCount", int.class);
+            Method setIncludeUppercaseMethod = operation.getClass().getMethod("setIncludeUppercase", boolean.class);
+            Method setUppercaseCountMethod = operation.getClass().getMethod("setUppercaseCount", int.class);
+            Method setIncludeLowercaseMethod = operation.getClass().getMethod("setIncludeLowercase", boolean.class);
+            Method setLowercaseCountMethod = operation.getClass().getMethod("setLowercaseCount", int.class);
+            Method setIncludeSpecialMethod = operation.getClass().getMethod("setIncludeSpecialChars", boolean.class);
+            Method setSpecialCountMethod = operation.getClass().getMethod("setSpecialCharCount", int.class);
+            Method setCountMethod = operation.getClass().getMethod("setPasswordCount", int.class);
+
+            setLengthMethod.invoke(operation, config.getPasswordLength());
+            setIncludeDigitsMethod.invoke(operation, config.isIncludeDigits());
+            setDigitCountMethod.invoke(operation, config.getDigitCount());
+            setIncludeUppercaseMethod.invoke(operation, config.isIncludeUppercase());
+            setUppercaseCountMethod.invoke(operation, config.getUppercaseCount());
+            setIncludeLowercaseMethod.invoke(operation, config.isIncludeLowercase());
+            setLowercaseCountMethod.invoke(operation, config.getLowercaseCount());
+            setIncludeSpecialMethod.invoke(operation, config.isIncludeSpecialChars());
+            setSpecialCountMethod.invoke(operation, config.getSpecialCharCount());
+            setCountMethod.invoke(operation, config.getPasswordCount());
+        } catch (Exception e) {
+            throw new Exception("设置密码生成器配置失败: " + e.getMessage(), e);
         }
     }
 

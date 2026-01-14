@@ -107,6 +107,45 @@ public class EventHandler {
                 delaySeconds, charIntervalMs, useClipboard));
         }
 
+        // 处理Base编码配置
+        if (operationValidator.requiresBaseEncodingConfig(selectedOperation)) {
+            @SuppressWarnings("unchecked")
+            JComboBox<String> encodingTypeComboBox = registry.getComponent(UIComponentRegistry.BASE_ENCODING_COMBO_BOX);
+            String encodingType = (String) encodingTypeComboBox.getSelectedItem();
+            String filePath = selectedImagePath;
+            builder.baseEncodingConfig(new OperationExecutionContext.BaseEncodingConfig(encodingType));
+            builder.imagePath(filePath);
+        }
+
+        // 处理密码生成器配置
+        if (operationValidator.requiresPasswordGeneratorConfig(selectedOperation)) {
+            JSpinner passwordLengthSpinner = registry.getComponent(UIComponentRegistry.PASSWORD_LENGTH_SPINNER);
+            JCheckBox includeDigitsCheckBox = registry.getComponent(UIComponentRegistry.INCLUDE_DIGITS_CHECK_BOX);
+            JSpinner digitCountSpinner = registry.getComponent(UIComponentRegistry.DIGIT_COUNT_SPINNER);
+            JCheckBox includeUppercaseCheckBox = registry.getComponent(UIComponentRegistry.INCLUDE_UPPERCASE_CHECK_BOX);
+            JSpinner uppercaseCountSpinner = registry.getComponent(UIComponentRegistry.UPPERCASE_COUNT_SPINNER);
+            JCheckBox includeLowercaseCheckBox = registry.getComponent(UIComponentRegistry.INCLUDE_LOWERCASE_CHECK_BOX);
+            JSpinner lowercaseCountSpinner = registry.getComponent(UIComponentRegistry.LOWERCASE_COUNT_SPINNER);
+            JCheckBox includeSpecialCharsCheckBox = registry.getComponent(UIComponentRegistry.INCLUDE_SPECIAL_CHARS_CHECK_BOX);
+            JSpinner specialCharCountSpinner = registry.getComponent(UIComponentRegistry.SPECIAL_CHAR_COUNT_SPINNER);
+            JSpinner passwordCountSpinner = registry.getComponent(UIComponentRegistry.PASSWORD_COUNT_SPINNER);
+
+            int passwordLength = (Integer) passwordLengthSpinner.getValue();
+            boolean includeDigits = includeDigitsCheckBox.isSelected();
+            int digitCount = (Integer) digitCountSpinner.getValue();
+            boolean includeUppercase = includeUppercaseCheckBox.isSelected();
+            int uppercaseCount = (Integer) uppercaseCountSpinner.getValue();
+            boolean includeLowercase = includeLowercaseCheckBox.isSelected();
+            int lowercaseCount = (Integer) lowercaseCountSpinner.getValue();
+            boolean includeSpecialChars = includeSpecialCharsCheckBox.isSelected();
+            int specialCharCount = (Integer) specialCharCountSpinner.getValue();
+            int passwordCount = (Integer) passwordCountSpinner.getValue();
+
+            builder.passwordGeneratorConfig(new OperationExecutionContext.PasswordGeneratorConfig(
+                passwordLength, includeDigits, digitCount, includeUppercase, uppercaseCount,
+                includeLowercase, lowercaseCount, includeSpecialChars, specialCharCount, passwordCount));
+        }
+
         OperationExecutionContext context = builder.build();
 
         try {
@@ -224,6 +263,25 @@ public class EventHandler {
             selectedImageLabel.setText("已选择: " + fileChooser.getSelectedFile().getName());
             selectedImageLabel.setForeground(Color.BLACK);
             logManager.log("已选择图片文件: " + selectedImagePath);
+        }
+    }
+
+    /**
+     * 处理选择文件事件（用于Base编码操作）
+     * @param parent 父组件，用于对话框
+     */
+    public void handleSelectFileForBaseEncoding(Component parent) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "图片文件", "png", "jpg", "jpeg", "gif", "bmp"));
+        fileChooser.setDialogTitle("选择图片文件");
+
+        if (fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+            selectedImagePath = fileChooser.getSelectedFile().getAbsolutePath();
+            JLabel selectedFileLabel = registry.getComponent(UIComponentRegistry.SELECTED_FILE_LABEL);
+            selectedFileLabel.setText("已选择: " + fileChooser.getSelectedFile().getName());
+            selectedFileLabel.setForeground(Color.BLACK);
+            logManager.log("已选择文件: " + selectedImagePath);
         }
     }
 
