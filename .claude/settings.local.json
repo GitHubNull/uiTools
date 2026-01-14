@@ -16,7 +16,10 @@
       "Bash(ls -lh target/*.jar)",
       "WebSearch",
       "Bash(find:*)",
-      "mcp__zai-mcp-server__extract_text_from_screenshot"
+      "mcp__zai-mcp-server__extract_text_from_screenshot",
+      "Bash(wc:*)",
+      "Bash(powershell -Command \"\\(Get-Content ''D:\\\\dev\\\\java_dev\\\\idea\\\\uiTools\\\\src\\\\main\\\\java\\\\org\\\\oxff\\\\ui\\\\StringFormatterUI.java'' | Measure-Object -Line\\).Lines\")",
+      "Bash(powershell -Command \"\\(Get-Content ''D:\\\\dev\\\\java_dev\\\\idea\\\\uiTools\\\\src\\\\main\\\\java\\\\org\\\\oxff\\\\ui\\\\MainWindow.java'' | Measure-Object -Line\\).Lines\")"
     ],
     "deny": [],
     "ask": []

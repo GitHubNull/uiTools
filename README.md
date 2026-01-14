@@ -312,14 +312,34 @@ src/main/java/org/oxff/
 ├── core/                  # 核心功能模块
 │   ├── OperationFactory.java      # 操作工厂，管理所有操作实例
 │   └── OperationCategory.java     # 操作分类枚举
-├── operation/             # 操作实现模块（20+操作实现）
-│   ├── *FormatOperation.java      # JSON/XML格式化操作
-│   ├── *EncodeOperation.java      # 各类编码操作
-│   ├── *DecodeOperation.java      # 各类解码操作
-│   ├── *HashOperation.java        # 哈希算法操作
-│   ├── AutoInputOperation.java    # 自动化输入操作
-│   ├── QRCode*Operation.java      # 二维码生成与解析
-│   └── Timestamp*Operation.java   # 时间戳相关操作
+├── operation/             # 操作实现模块（按功能分组的二级包结构）
+│   ├── Operation.java            # 操作接口（根包）
+│   ├── encoding/                 # 编解码操作（12个）
+│   │   ├── url/                 # URL编解码
+│   │   ├── base64/              # Base64编解码
+│   │   ├── base32/              # Base32编解码
+│   │   ├── unicode/             # Unicode编解码
+│   │   ├── hex/                 # Hex编解码
+│   │   ├── jwt/                 # JWT编解码
+│   │   └── image/               # 图片转Base编码
+│   ├── formatting/               # 格式化操作（2个）
+│   │   ├── JsonFormatOperation  # JSON格式化
+│   │   └── XmlFormatOperation   # XML格式化
+│   ├── hashing/                  # 哈希操作（3个）
+│   │   ├── Md5HashOperation     # MD5哈希
+│   │   ├── Sha1HashOperation    # SHA1哈希
+│   │   └── Sha256HashOperation  # SHA256哈希
+│   ├── timestamp/                # 时间戳操作（6个）
+│   │   ├── conversion/          # 时间戳转换（3个）
+│   │   ├── format/              # 时间戳格式化（1个）
+│   │   └── utc/                 # UTC时间转换（2个）
+│   ├── qrcode/                   # 二维码操作（2个）
+│   │   ├── QRCodeGenerateOperation  # 生成二维码
+│   │   └── QRCodeDecodeOperation   # 解析二维码
+│   ├── automation/               # 自动化操作（1个）
+│   │   └── AutoInputOperation   # 键盘模拟输入
+│   └── generator/                # 生成工具（1个）
+│       └── RandomPasswordOperation  # 生成随机密码
 └── ui/                    # 用户界面模块（refactored架构）
     ├── StringFormatterUI.java       # 主UI控制器
     ├── components/          # UI组件注册和构建

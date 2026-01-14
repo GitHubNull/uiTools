@@ -1,6 +1,7 @@
 package org.oxff.operation;
 
 import org.oxff.core.OperationCategory;
+import org.oxff.operation.Operation;
 
 /**
  * 操作接口，所有字符串操作都需要实现此接口

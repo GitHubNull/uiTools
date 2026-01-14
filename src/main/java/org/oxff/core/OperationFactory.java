@@ -1,6 +1,34 @@
 package org.oxff.core;
 
-import org.oxff.operation.*;
+import org.oxff.operation.Operation;
+import org.oxff.operation.formatting.JsonFormatOperation;
+import org.oxff.operation.formatting.XmlFormatOperation;
+import org.oxff.operation.encoding.url.UrlEncodeOperation;
+import org.oxff.operation.encoding.url.UrlDecodeOperation;
+import org.oxff.operation.encoding.base64.Base64EncodeOperation;
+import org.oxff.operation.encoding.base64.Base64DecodeOperation;
+import org.oxff.operation.encoding.base32.Base32EncodeOperation;
+import org.oxff.operation.encoding.base32.Base32DecodeOperation;
+import org.oxff.operation.encoding.unicode.UnicodeEncodeOperation;
+import org.oxff.operation.encoding.unicode.UnicodeDecodeOperation;
+import org.oxff.operation.encoding.hex.HexEncodeOperation;
+import org.oxff.operation.encoding.hex.HexDecodeOperation;
+import org.oxff.operation.encoding.jwt.JwtEncodeOperation;
+import org.oxff.operation.encoding.jwt.JwtDecodeOperation;
+import org.oxff.operation.encoding.image.ImageToBaseOperation;
+import org.oxff.operation.hashing.Md5HashOperation;
+import org.oxff.operation.hashing.Sha1HashOperation;
+import org.oxff.operation.hashing.Sha256HashOperation;
+import org.oxff.operation.automation.AutoInputOperation;
+import org.oxff.operation.qrcode.QRCodeGenerateOperation;
+import org.oxff.operation.qrcode.QRCodeDecodeOperation;
+import org.oxff.operation.timestamp.conversion.CurrentTimestampOperation;
+import org.oxff.operation.timestamp.conversion.TimestampFromDateOperation;
+import org.oxff.operation.timestamp.conversion.TimestampToDateOperation;
+import org.oxff.operation.timestamp.format.TimestampFormatOperation;
+import org.oxff.operation.timestamp.utc.TimestampToUtcOperation;
+import org.oxff.operation.timestamp.utc.TimestampFromUtcOperation;
+import org.oxff.operation.generator.RandomPasswordOperation;
 
 import java.util.*;
 
