@@ -4,7 +4,7 @@ import org.oxff.ui.components.UIComponentRegistry;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.CardLayout;
 
 /**
  * UI状态管理器，管理UI状态，控制各面板的显示/隐藏
@@ -61,94 +61,64 @@ public class UIStateManager {
     }
 
     /**
-     * 更新图片输入面板可见性
+     * 更新输入面板可见性
+     * 根据操作类型动态切换输入面板
      * @param operationName 操作名称
      */
     public void updateImageInputPanelVisibility(String operationName) {
-        boolean showImageInputPanel = validator.requiresImageInput(operationName);
-        boolean showTimezonePanel = validator.requiresTimezoneSelection(operationName);
-        boolean showBaseEncodingConfigPanel = validator.requiresBaseEncodingConfig(operationName);
-        boolean showPasswordGeneratorConfigPanel = validator.requiresPasswordGeneratorConfig(operationName);
+        String panelType = determineInputPanelType(operationName);
+        switchInputCard(panelType);
+        updateButtonStates(operationName);
+    }
 
-        RSyntaxTextArea inputTextArea = registry.getInputTextArea();
-
-        if (showImageInputPanel) {
-            // 切换到图片输入面板
-            switchConfigPanel("IMAGE");
-            // 禁用普通的文本输入区域
-            inputTextArea.setEnabled(false);
-            inputTextArea.setBackground(Color.LIGHT_GRAY);
-            inputTextArea.setText("请使用下方的图片选择功能选择二维码图片文件");
-        } else if (showTimezonePanel) {
-            // 切换到时区选择面板
-            switchConfigPanel("TIMEZONE");
-            // 禁用文本输入区域
-            inputTextArea.setEnabled(false);
-            inputTextArea.setBackground(Color.LIGHT_GRAY);
-            inputTextArea.setText("请使用下方的时区选择功能选择时区");
-        } else if (showBaseEncodingConfigPanel) {
-            // 切换到Base编码配置面板
-            switchConfigPanel("BASE_ENCODING");
-            // 禁用文本输入区域
-            inputTextArea.setEnabled(false);
-            inputTextArea.setBackground(Color.LIGHT_GRAY);
-            inputTextArea.setText("请使用下方的文件选择功能选择图片文件");
-        } else if (showPasswordGeneratorConfigPanel) {
-            // 切换到密码生成器配置面板
-            switchConfigPanel("PASSWORD_GENERATOR");
-            // 禁用文本输入区域
-            inputTextArea.setEnabled(false);
-            inputTextArea.setBackground(Color.LIGHT_GRAY);
-            inputTextArea.setText("请使用下方的配置面板设置密码生成规则");
+    /**
+     * 确定要显示的输入面板类型
+     */
+    private String determineInputPanelType(String operationName) {
+        if (validator.requiresImageInput(operationName)) {
+            return "IMAGE";
+        } else if (validator.requiresTimezoneSelection(operationName)) {
+            return "TIMEZONE";
+        } else if (validator.requiresBaseEncodingConfig(operationName)) {
+            return "BASE_ENCODING";
+        } else if (validator.requiresPasswordGeneratorConfig(operationName)) {
+            return "PASSWORD_GENERATOR";
+        } else if (validator.isAutomationOperation(operationName)) {
+            return "AUTOMATION";
         } else {
-            // 切换到空面板
-            switchConfigPanel("EMPTY");
-            // 显示普通的文本输入区域
-            inputTextArea.setEnabled(true);
-            inputTextArea.setBackground(Color.WHITE);
-            String currentText = inputTextArea.getText();
-            if ("请使用下方的图片选择功能选择二维码图片文件".equals(currentText) ||
-                "请使用下方的时区选择功能选择时区".equals(currentText) ||
-                "请使用下方的文件选择功能选择图片文件".equals(currentText) ||
-                "请使用下方的配置面板设置密码生成规则".equals(currentText)) {
-                inputTextArea.setText("");
-            }
+            return "TEXT";
         }
     }
 
     /**
-     * 切换配置面板
-     * @param panelName 面板名称 (AUTOMATION, IMAGE, TIMEZONE, EMPTY)
+     * 切换输入卡片面板
      */
-    private void switchConfigPanel(String panelName) {
-        // 查找 configContainerPanel（它位于 inputPanel 的 SOUTH 位置）
-        // 从 inputTextArea 开始向上查找
-        RSyntaxTextArea inputTextArea = registry.getInputTextArea();
-        JScrollPane scrollPane = (JScrollPane) inputTextArea.getParent().getParent();
-        JPanel inputPanel = (JPanel) scrollPane.getParent();
-        JPanel configContainerPanel = (JPanel) inputPanel.getComponent(2);
-        CardLayout cardLayout = (CardLayout) configContainerPanel.getLayout();
-        cardLayout.show(configContainerPanel, panelName);
-    }
-
-    /**
-     * 更新自动化配置面板可见性
-     * @param visible 是否可见
-     */
-    public void updateAutomationConfigPanel(boolean visible) {
-        if (visible) {
-            switchConfigPanel("AUTOMATION");
+    private void switchInputCard(String panelType) {
+        JPanel inputCardsContainer = registry.getComponent(UIComponentRegistry.INPUT_CARDS_CONTAINER);
+        if (inputCardsContainer != null) {
+            CardLayout cardLayout = (CardLayout) inputCardsContainer.getLayout();
+            cardLayout.show(inputCardsContainer, panelType);
         }
     }
 
     /**
-     * 更新时区配置面板可见性
-     * @param visible 是否可见
+     * 更新按钮状态
+     * 根据操作类型启用或禁用文本输入相关按钮
      */
-    public void updateTimezoneConfigPanel(boolean visible) {
-        if (visible) {
-            switchConfigPanel("TIMEZONE");
-        }
+    private void updateButtonStates(String operationName) {
+        boolean needsButtons = validator.requiresTextInputButtons(operationName);
+
+        JButton pasteButton = registry.getComponent(UIComponentRegistry.PASTE_INPUT_BUTTON);
+        JButton copyButton = registry.getComponent(UIComponentRegistry.COPY_INPUT_BUTTON);
+        JButton clearButton = registry.getComponent(UIComponentRegistry.CLEAR_INPUT_BUTTON);
+        JButton swapButton = registry.getComponent(UIComponentRegistry.SWAP_BUTTON);
+        JCheckBox wrapCheckBox = registry.getComponent(UIComponentRegistry.WRAP_CHECK_BOX);
+
+        if (pasteButton != null) pasteButton.setEnabled(needsButtons);
+        if (copyButton != null) copyButton.setEnabled(needsButtons);
+        if (clearButton != null) clearButton.setEnabled(needsButtons);
+        if (swapButton != null) swapButton.setEnabled(needsButtons);
+        if (wrapCheckBox != null) wrapCheckBox.setEnabled(needsButtons);
     }
 
     /**

@@ -7,6 +7,8 @@ import org.oxff.operation.Operation;
 import org.oxff.ui.components.UIComponentRegistry;
 import org.oxff.ui.builder.ConfigPanelBuilder;
 import org.oxff.ui.builder.ConfigPanelBuilder.ConfigPanelsResult;
+import org.oxff.ui.builder.InputPanelBuilder;
+import org.oxff.ui.builder.InputPanelBuilder.InputPanelsResult;
 import org.oxff.ui.builder.ExpressionPanelBuilder;
 import org.oxff.ui.builder.ExpressionPanelBuilder.ExpressionPanelResult;
 import org.oxff.ui.builder.OperationTreeBuilder;
@@ -232,73 +234,57 @@ public class MainWindow extends JFrame {
 
     /**
      * 创建输入面板
+     * 使用 CardLayout 动态切换不同类型的输入面板
      */
     private JPanel createInputPanel() {
         JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.setBorder(BorderFactory.createTitledBorder("输入"));
 
-        // 输入区域按钮面板
-        JPanel inputButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        pasteInputButton = new JButton("粘贴");
-        copyInputButton = new JButton("复制");
-        clearInputButton = new JButton("清空");
-        swapButton = new JButton("交换");
-        wrapCheckBox = new JCheckBox("自动换行");
+        // 使用 InputPanelBuilder 创建所有输入面板
+        InputPanelBuilder inputBuilder = new InputPanelBuilder(registry);
+        InputPanelBuilder.InputPanelsResult inputResult = inputBuilder.buildAllInputPanels();
 
-        inputButtonPanel.add(pasteInputButton);
-        inputButtonPanel.add(copyInputButton);
-        inputButtonPanel.add(clearInputButton);
-        inputButtonPanel.add(swapButton);
-        inputButtonPanel.add(wrapCheckBox);
+        // 保存按钮面板引用
+        JPanel inputButtonPanel = inputResult.inputButtonPanel;
+        pasteInputButton = (JButton) registry.getComponent(UIComponentRegistry.PASTE_INPUT_BUTTON);
+        copyInputButton = (JButton) registry.getComponent(UIComponentRegistry.COPY_INPUT_BUTTON);
+        clearInputButton = (JButton) registry.getComponent(UIComponentRegistry.CLEAR_INPUT_BUTTON);
+        swapButton = (JButton) registry.getComponent(UIComponentRegistry.SWAP_BUTTON);
+        wrapCheckBox = (JCheckBox) registry.getComponent(UIComponentRegistry.WRAP_CHECK_BOX);
 
-        // 使用RSyntaxTextArea替换自定义的LineNumberTextArea
-        RSyntaxTextArea inputTextArea = new RSyntaxTextArea();
-        inputTextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        inputTextArea.setLineWrap(false);
-        inputTextArea.setCodeFoldingEnabled(true);
+        // 保存配置面板引用（用于事件处理）
+        automationConfigPanel = inputResult.automationInputPanel;
+        imageInputPanel = inputResult.imageInputPanel;
+        timezoneConfigPanel = inputResult.timezoneInputPanel;
+        baseEncodingConfigPanel = inputResult.baseEncodingInputPanel;
+        passwordGeneratorConfigPanel = inputResult.passwordGeneratorInputPanel;
 
-        // 立即注册到注册表
-        registry.registerComponent(UIComponentRegistry.INPUT_TEXT_AREA, inputTextArea);
-
-        // 使用RTextScrollPane提供行号显示
-        RTextScrollPane inputScrollPane = new RTextScrollPane(inputTextArea);
-
-        inputPanel.add(inputButtonPanel, BorderLayout.NORTH);
-        inputPanel.add(inputScrollPane, BorderLayout.CENTER);
-
-        // 使用 ConfigPanelBuilder 创建所有配置面板
+        // 获取配置面板组件引用
         ConfigPanelBuilder configBuilder = new ConfigPanelBuilder(registry);
-        ConfigPanelsResult configResult = configBuilder.buildAllConfigPanels();
+        delaySecondsSpinner = (JSpinner) registry.getComponent(UIComponentRegistry.DELAY_SECONDS_SPINNER);
+        charIntervalMsSpinner = (JSpinner) registry.getComponent(UIComponentRegistry.CHAR_INTERVAL_MS_SPINNER);
+        inputSourceRadio = (JRadioButton) registry.getComponent(UIComponentRegistry.INPUT_SOURCE_RADIO);
+        clipboardSourceRadio = (JRadioButton) registry.getComponent(UIComponentRegistry.CLIPBOARD_SOURCE_RADIO);
+        selectImageButton = (JButton) registry.getComponent(UIComponentRegistry.SELECT_IMAGE_BUTTON);
+        pasteImageButton = (JButton) registry.getComponent(UIComponentRegistry.PASTE_IMAGE_BUTTON);
+        selectedImageLabel = (JLabel) registry.getComponent(UIComponentRegistry.SELECTED_IMAGE_LABEL);
+        timezoneComboBox = (JComboBox<String>) registry.getComponent(UIComponentRegistry.TIMEZONE_COMBO_BOX);
 
-        // 保存配置面板和组件引用
-        automationConfigPanel = configResult.automationConfigPanel;
-        imageInputPanel = configResult.imageInputPanel;
-        timezoneConfigPanel = configResult.timezoneConfigPanel;
-        baseEncodingConfigPanel = configResult.baseEncodingConfigPanel;
-        passwordGeneratorConfigPanel = configResult.passwordGeneratorConfigPanel;
+        // 创建输入卡片容器
+        JPanel inputCardsContainer = new JPanel(new CardLayout());
+        inputCardsContainer.add(inputResult.textInputPanel, "TEXT");
+        inputCardsContainer.add(inputResult.imageInputPanel, "IMAGE");
+        inputCardsContainer.add(inputResult.timezoneInputPanel, "TIMEZONE");
+        inputCardsContainer.add(inputResult.baseEncodingInputPanel, "BASE_ENCODING");
+        inputCardsContainer.add(inputResult.passwordGeneratorInputPanel, "PASSWORD_GENERATOR");
+        inputCardsContainer.add(inputResult.automationInputPanel, "AUTOMATION");
 
-        delaySecondsSpinner = configResult.delaySecondsSpinner;
-        charIntervalMsSpinner = configResult.charIntervalMsSpinner;
-        inputSourceRadio = configResult.inputSourceRadio;
-        clipboardSourceRadio = configResult.clipboardSourceRadio;
-        selectImageButton = configResult.selectImageButton;
-        pasteImageButton = configResult.pasteImageButton;
-        selectedImageLabel = configResult.selectedImageLabel;
-        timezoneComboBox = configResult.timezoneComboBox;
+        // 注册到注册表
+        registry.registerComponent(UIComponentRegistry.INPUT_CARDS_CONTAINER, inputCardsContainer);
 
-        // 创建一个容器面板来管理所有可选配置面板
-        JPanel configContainerPanel = new JPanel(new CardLayout());
-        configContainerPanel.add(automationConfigPanel, "AUTOMATION");
-        configContainerPanel.add(imageInputPanel, "IMAGE");
-        configContainerPanel.add(timezoneConfigPanel, "TIMEZONE");
-        configContainerPanel.add(baseEncodingConfigPanel, "BASE_ENCODING");
-        configContainerPanel.add(passwordGeneratorConfigPanel, "PASSWORD_GENERATOR");
-
-        // 默认显示空面板
-        JPanel emptyPanel = new JPanel();
-        configContainerPanel.add(emptyPanel, "EMPTY");
-
-        inputPanel.add(configContainerPanel, BorderLayout.SOUTH);
+        // 组装布局
+        inputPanel.add(inputButtonPanel, BorderLayout.NORTH);
+        inputPanel.add(inputCardsContainer, BorderLayout.CENTER);
 
         return inputPanel;
     }

@@ -59,6 +59,30 @@ public class EventHandler {
         String inputText = registry.getInputTextArea().getText();
         String expressions = registry.getExpressionTextArea().getText().trim();
 
+        // 对于需要图片输入的操作，先获取图片路径作为输入文本
+        if (operationValidator.requiresImageInput(selectedOperation)) {
+            if (selectedImagePath != null && !selectedImagePath.isEmpty()) {
+                inputText = selectedImagePath;
+            } else {
+                JOptionPane.showMessageDialog(parent, "请选择二维码图片文件或使用粘贴图片功能",
+                    "提示", JOptionPane.WARNING_MESSAGE);
+                logManager.log("执行操作失败：未选择图片");
+                return;
+            }
+        }
+
+        // 对于Base编码操作，先获取图片路径作为输入文本
+        if (operationValidator.requiresBaseEncodingConfig(selectedOperation)) {
+            if (selectedImagePath != null && !selectedImagePath.isEmpty()) {
+                inputText = selectedImagePath;
+            } else {
+                JOptionPane.showMessageDialog(parent, "请选择图片文件",
+                    "提示", JOptionPane.WARNING_MESSAGE);
+                logManager.log("执行操作失败：未选择文件");
+                return;
+            }
+        }
+
         // 验证操作
         OperationValidator.ValidationResult validation =
             operationValidator.validateExecution(selectedOperation, inputText);
@@ -71,19 +95,6 @@ public class EventHandler {
         }
 
         Operation operation = OperationFactory.getOperation(selectedOperation);
-
-        // 对于二维码解析操作，检查是否有图片输入
-        if (operationValidator.requiresImageInput(selectedOperation)) {
-            if (selectedImagePath != null && !selectedImagePath.isEmpty()) {
-                inputText = selectedImagePath;
-            } else if (inputText.isEmpty() ||
-                "请使用下方的图片选择功能选择二维码图片文件".equals(inputText)) {
-                JOptionPane.showMessageDialog(parent, "请选择二维码图片文件或使用粘贴图片功能",
-                    "提示", JOptionPane.WARNING_MESSAGE);
-                logManager.log("执行操作失败：未选择图片");
-                return;
-            }
-        }
 
         // 构建执行上下文
         OperationExecutionContext.Builder builder = new OperationExecutionContext.Builder()

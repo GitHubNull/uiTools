@@ -63,6 +63,9 @@ public class UIComponentRegistry {
     public static final String SPECIAL_CHAR_COUNT_SPINNER = "specialCharCountSpinner";
     public static final String PASSWORD_COUNT_SPINNER = "passwordCountSpinner";
 
+    // 输入卡片容器
+    public static final String INPUT_CARDS_CONTAINER = "inputCardsContainer";
+
     /**
      * 注册组件
      * @param name 组件名称

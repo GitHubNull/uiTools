@@ -133,6 +133,24 @@ public class OperationValidator {
     }
 
     /**
+     * 检查操作是否需要文本输入按钮（粘贴、复制、清空等）
+     * @param operationName 操作名称
+     * @return true 如果操作需要文本输入按钮，否则返回 false
+     */
+    public boolean requiresTextInputButtons(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        // 不需要按钮的操作类型
+        return !requiresImageInput(operationName)
+            && !requiresTimezoneSelection(operationName)
+            && !requiresBaseEncodingConfig(operationName)
+            && !requiresPasswordGeneratorConfig(operationName)
+            && !isAutomationOperation(operationName);
+    }
+
+    /**
      * 验证执行条件
      * @param operationName 操作名称
      * @param inputText 输入文本
