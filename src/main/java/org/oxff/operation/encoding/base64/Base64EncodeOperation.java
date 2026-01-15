@@ -3,6 +3,8 @@ package org.oxff.operation.encoding.base64;
 import org.apache.commons.codec.binary.Base64;
 import org.oxff.operation.Operation;
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 
 import java.nio.charset.StandardCharsets;
 
@@ -23,5 +25,10 @@ public class Base64EncodeOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "Base64编码";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("base64");
     }
 }

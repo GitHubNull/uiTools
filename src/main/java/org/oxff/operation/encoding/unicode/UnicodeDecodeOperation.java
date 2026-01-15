@@ -1,6 +1,8 @@
 package org.oxff.operation.encoding.unicode;
 
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 import org.oxff.operation.Operation;
 
 /**
@@ -37,5 +39,10 @@ public class UnicodeDecodeOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "Unicode解码";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("unicode");
     }
 }

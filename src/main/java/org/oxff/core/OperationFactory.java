@@ -38,6 +38,7 @@ import java.util.*;
 public class OperationFactory {
     private static final Map<String, Operation> operations = new HashMap<>();
     private static final Map<OperationCategory, List<Operation>> operationsByCategory = new HashMap<>();
+    private static final Map<OperationCategory, Map<Subcategory, List<Operation>>> operationsByCategoryAndSubcategory = new HashMap<>();
 
     static {
         // 初始化所有操作
@@ -84,9 +85,30 @@ public class OperationFactory {
         for (OperationCategory category : OperationCategory.values()) {
             operationsByCategory.put(category, new ArrayList<>());
         }
-        
+
         for (Operation op : allOperations) {
             operationsByCategory.get(op.getCategory()).add(op);
+        }
+
+        // 按分类和子分类组织操作
+        for (OperationCategory category : OperationCategory.values()) {
+            operationsByCategoryAndSubcategory.put(category, new HashMap<>());
+        }
+
+        for (Operation op : allOperations) {
+            OperationCategory category = op.getCategory();
+            Subcategory subcategory = op.getSubcategory();
+
+            if (subcategory != null) {
+                operationsByCategoryAndSubcategory.get(category)
+                    .computeIfAbsent(subcategory, k -> new ArrayList<>())
+                    .add(op);
+            } else {
+                // 没有子分类的操作，使用默认子分类
+                operationsByCategoryAndSubcategory.get(category)
+                    .computeIfAbsent(SubcategoryRegistry.getDefaultSubcategory(), k -> new ArrayList<>())
+                    .add(op);
+            }
         }
     }
     
@@ -100,6 +122,14 @@ public class OperationFactory {
 
     public static List<Operation> getOperationsByCategory(OperationCategory category) {
         return Collections.unmodifiableList(operationsByCategory.get(category));
+    }
+
+    public static Map<Subcategory, List<Operation>> getOperationsByCategoryWithSubcategory(OperationCategory category) {
+        Map<Subcategory, List<Operation>> result = new HashMap<>();
+        for (Map.Entry<Subcategory, List<Operation>> entry : operationsByCategoryAndSubcategory.get(category).entrySet()) {
+            result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+        }
+        return Collections.unmodifiableMap(result);
     }
 
     /**

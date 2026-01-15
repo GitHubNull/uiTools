@@ -1,6 +1,8 @@
 package org.oxff.operation.encoding.hex;
 
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 import org.oxff.operation.Operation;
 
 import java.nio.charset.StandardCharsets;
@@ -45,5 +47,10 @@ public class HexDecodeOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "Hex解码";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("hex");
     }
 }

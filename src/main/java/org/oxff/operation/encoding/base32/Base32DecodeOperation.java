@@ -3,6 +3,8 @@ package org.oxff.operation.encoding.base32;
 import org.apache.commons.codec.binary.Base32;
 import org.oxff.operation.Operation;
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 
 import java.nio.charset.StandardCharsets;
 
@@ -29,5 +31,10 @@ public class Base32DecodeOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "Base32解码";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("base32");
     }
 }

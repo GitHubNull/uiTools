@@ -4,6 +4,8 @@ import org.apache.commons.codec.binary.Base32;
 import org.oxff.operation.Operation;
 import org.apache.commons.codec.binary.Base64;
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -104,5 +106,10 @@ public class ImageToBaseOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "图片转Base编码";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("image");
     }
 }

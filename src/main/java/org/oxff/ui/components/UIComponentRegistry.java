@@ -18,7 +18,6 @@ public class UIComponentRegistry {
     public static final String OUTPUT_TEXT_AREA = "outputTextArea";
     public static final String EXPRESSION_TEXT_AREA = "expressionTextArea";
     public static final String LOG_TEXT_AREA = "logTextArea";
-    public static final String OPERATION_COMBO_BOX = "operationComboBox";
     public static final String OPERATION_TREE = "operationTree";
     public static final String EXECUTE_BUTTON = "executeButton";
     public static final String COPY_INPUT_BUTTON = "copyInputButton";
@@ -105,15 +104,6 @@ public class UIComponentRegistry {
      */
     public RSyntaxTextArea getExpressionTextArea() {
         return getComponent(EXPRESSION_TEXT_AREA);
-    }
-
-    /**
-     * 获取操作下拉框
-     * @return 操作下拉框
-     */
-    @SuppressWarnings("unchecked")
-    public JComboBox<String> getOperationComboBox() {
-        return getComponent(OPERATION_COMBO_BOX);
     }
 
     /**

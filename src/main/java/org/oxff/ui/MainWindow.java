@@ -52,7 +52,6 @@ public class MainWindow extends JFrame {
     private EventHandler eventHandler;
 
     // UI组件引用（用于布局构建）
-    private JComboBox<String> operationComboBox;
     private JButton executeButton;
     private JButton copyInputButton;
     private JButton pasteInputButton;
@@ -153,18 +152,7 @@ public class MainWindow extends JFrame {
         JPanel topPanel = new JPanel(new FlowLayout());
         topPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JLabel operationLabel = new JLabel("选择操作:");
-        operationComboBox = new JComboBox<>(OperationFactory.getAllOperationNames());
-        operationComboBox.addActionListener(e -> {
-            String selected = (String) operationComboBox.getSelectedItem();
-            if (eventHandler != null) {
-                eventHandler.handleOperationSelection(selected);
-            }
-        });
         executeButton = new JButton("执行");
-
-        topPanel.add(operationLabel);
-        topPanel.add(operationComboBox);
         topPanel.add(executeButton);
 
         return topPanel;
@@ -196,7 +184,6 @@ public class MainWindow extends JFrame {
             if (userObject instanceof Operation) {
                 Operation operation = (Operation) userObject;
                 String selected = operation.getDisplayName();
-                operationComboBox.setSelectedItem(selected);
                 if (eventHandler != null) {
                     eventHandler.handleOperationSelection(selected);
                 }
@@ -445,7 +432,6 @@ public class MainWindow extends JFrame {
         registry.registerComponent(UIComponentRegistry.LOG_TEXT_AREA, logManager.getLogTextArea());
 
         // 注册操作选择组件
-        registry.registerComponent(UIComponentRegistry.OPERATION_COMBO_BOX, operationComboBox);
         registry.registerComponent(UIComponentRegistry.OPERATION_TREE, operationTree);
 
         // 注册按钮

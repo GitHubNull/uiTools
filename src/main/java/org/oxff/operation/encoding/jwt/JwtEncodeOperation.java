@@ -10,6 +10,8 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 
 import javax.crypto.SecretKey;
 import java.security.KeyFactory;
@@ -169,5 +171,10 @@ public class JwtEncodeOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "JWT编码";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("jwt");
     }
 }

@@ -1,6 +1,8 @@
 package org.oxff.operation.timestamp.conversion;
 
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 import org.oxff.operation.Operation;
 
 import java.time.LocalDateTime;
@@ -72,5 +74,10 @@ public class TimestampFromDateOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "日期转时间戳";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("conversion");
     }
 }

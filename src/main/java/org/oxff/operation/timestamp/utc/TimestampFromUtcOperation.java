@@ -1,6 +1,8 @@
 package org.oxff.operation.timestamp.utc;
 
 import org.oxff.core.OperationCategory;
+import org.oxff.core.Subcategory;
+import org.oxff.core.SubcategoryRegistry;
 import org.oxff.operation.Operation;
 
 import java.time.LocalDateTime;
@@ -76,5 +78,10 @@ public class TimestampFromUtcOperation implements Operation {
     @Override
     public String getDisplayName() {
         return "UTC时间转时间戳";
+    }
+
+    @Override
+    public Subcategory getSubcategory() {
+        return SubcategoryRegistry.getSubcategory("utc");
     }
 }

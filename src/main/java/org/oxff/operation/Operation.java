@@ -1,7 +1,7 @@
 package org.oxff.operation;
 
 import org.oxff.core.OperationCategory;
-import org.oxff.operation.Operation;
+import org.oxff.core.Subcategory;
 
 /**
  * 操作接口，所有字符串操作都需要实现此接口
@@ -25,6 +25,14 @@ public interface Operation {
      * @return 显示名称
      */
     String getDisplayName();
+
+    /**
+     * 获取操作子分类（可选）
+     * @return 子分类，默认返回null（表示无子分类）
+     */
+    default Subcategory getSubcategory() {
+        return null;
+    }
 
     /**
      * 判断是否返回图片数据
