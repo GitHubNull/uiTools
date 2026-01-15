@@ -78,22 +78,8 @@ public class OperationValidator {
             return false;
         }
 
-        // "获取当前时间戳" 和 "生成随机密码" 可以在无输入时执行
-        return "获取当前时间戳".equals(operationName) || "生成随机密码".equals(operationName);
-    }
-
-    /**
-     * 检查操作是否需要时区选择
-     * @param operationName 操作名称
-     * @return true 如果操作需要时区选择，否则返回 false
-     */
-    public boolean requiresTimezoneSelection(String operationName) {
-        if (operationName == null || operationName.isEmpty()) {
-            return false;
-        }
-
-        // "获取当前时间戳" 需要时区选择
-        return "获取当前时间戳".equals(operationName);
+        // "获取当前时间" 和 "生成随机密码" 可以在无输入时执行
+        return "获取当前时间".equals(operationName) || "生成随机密码".equals(operationName);
     }
 
     /**
@@ -133,6 +119,45 @@ public class OperationValidator {
     }
 
     /**
+     * 检查操作是否需要获取当前时间配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要获取当前时间配置面板，否则返回 false
+     */
+    public boolean requiresGetCurrentTimeConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        return "获取当前时间".equals(operationName);
+    }
+
+    /**
+     * 检查操作是否需要时间戳转日期配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要时间戳转日期配置面板，否则返回 false
+     */
+    public boolean requiresTimestampToDatetimeConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        return "时间戳转日期".equals(operationName);
+    }
+
+    /**
+     * 检查操作是否需要日期转时间戳配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要日期转时间戳配置面板，否则返回 false
+     */
+    public boolean requiresDatetimeToTimestampConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        return "日期转时间戳".equals(operationName);
+    }
+
+    /**
      * 检查操作是否需要文本输入按钮（粘贴、复制、清空等）
      * @param operationName 操作名称
      * @return true 如果操作需要文本输入按钮，否则返回 false
@@ -144,7 +169,9 @@ public class OperationValidator {
 
         // 不需要按钮的操作类型
         return !requiresImageInput(operationName)
-            && !requiresTimezoneSelection(operationName)
+            && !requiresGetCurrentTimeConfig(operationName)
+            && !requiresTimestampToDatetimeConfig(operationName)
+            && !requiresDatetimeToTimestampConfig(operationName)
             && !requiresBaseEncodingConfig(operationName)
             && !requiresPasswordGeneratorConfig(operationName)
             && !isAutomationOperation(operationName);

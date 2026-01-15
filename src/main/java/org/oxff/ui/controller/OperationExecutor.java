@@ -56,6 +56,21 @@ public class OperationExecutor {
             handlePasswordGeneratorConfig(operation, context.getPasswordGeneratorConfig());
         }
 
+        // 配置获取当前时间操作
+        if (validator.requiresGetCurrentTimeConfig(operationName) && context.getGetCurrentTimeConfig() != null) {
+            handleGetCurrentTimeConfig(operation, context.getGetCurrentTimeConfig());
+        }
+
+        // 配置时间戳转日期操作
+        if (validator.requiresTimestampToDatetimeConfig(operationName) && context.getTimestampToDatetimeConfig() != null) {
+            handleTimestampToDatetimeConfig(operation, context.getTimestampToDatetimeConfig());
+        }
+
+        // 配置日期转时间戳操作
+        if (validator.requiresDatetimeToTimestampConfig(operationName) && context.getDatetimeToTimestampConfig() != null) {
+            handleDatetimeToTimestampConfig(operation, context.getDatetimeToTimestampConfig());
+        }
+
         long startTime = System.currentTimeMillis();
         String result;
 
@@ -103,11 +118,6 @@ public class OperationExecutor {
             }
             // 否则使用输入框中的内容
             return inputText;
-        }
-
-        // 对于"获取当前时间戳"操作，使用时区选择器的值
-        if (validator.requiresTimezoneSelection(operationName)) {
-            return context.getTimezoneSelection() != null ? context.getTimezoneSelection() : "";
         }
 
         return inputText;
@@ -211,6 +221,60 @@ public class OperationExecutor {
 
         // 其他操作直接执行
         return operation.execute(input);
+    }
+
+    /**
+     * 处理获取当前时间配置
+     * @param operation 操作对象
+     * @param config 获取当前时间配置
+     * @throws Exception 反射调用失败时抛出异常
+     */
+    public void handleGetCurrentTimeConfig(Operation operation,
+                                           OperationExecutionContext.GetCurrentTimeConfig config)
+            throws Exception {
+        try {
+            Method method = operation.getClass().getMethod("setConfig",
+                String.class, String.class, String.class, String.class, boolean.class);
+            method.invoke(operation,
+                config.getTimezoneId(), config.getOutputType(), config.getDateFormat(),
+                config.getTimestampDigits(), config.isPadWithZero());
+        } catch (Exception e) {
+            throw new Exception("设置获取当前时间配置失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 处理时间戳转日期配置
+     * @param operation 操作对象
+     * @param config 时间戳转日期配置
+     * @throws Exception 反射调用失败时抛出异常
+     */
+    public void handleTimestampToDatetimeConfig(Operation operation,
+                                                 OperationExecutionContext.TimestampToDatetimeConfig config)
+            throws Exception {
+        try {
+            Method method = operation.getClass().getMethod("setConfig", String.class, String.class);
+            method.invoke(operation, config.getTimezoneId(), config.getDateFormat());
+        } catch (Exception e) {
+            throw new Exception("设置时间戳转日期配置失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 处理日期转时间戳配置
+     * @param operation 操作对象
+     * @param config 日期转时间戳配置
+     * @throws Exception 反射调用失败时抛出异常
+     */
+    public void handleDatetimeToTimestampConfig(Operation operation,
+                                                 OperationExecutionContext.DatetimeToTimestampConfig config)
+            throws Exception {
+        try {
+            Method method = operation.getClass().getMethod("setConfig", String.class, String.class, boolean.class);
+            method.invoke(operation, config.getInputFormat(), config.getOutputDigits(), config.isPadWithZero());
+        } catch (Exception e) {
+            throw new Exception("设置日期转时间戳配置失败: " + e.getMessage(), e);
+        }
     }
 
     /**

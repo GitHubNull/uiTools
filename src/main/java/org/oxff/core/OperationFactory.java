@@ -22,12 +22,9 @@ import org.oxff.operation.hashing.Sha256HashOperation;
 import org.oxff.operation.automation.AutoInputOperation;
 import org.oxff.operation.qrcode.QRCodeGenerateOperation;
 import org.oxff.operation.qrcode.QRCodeDecodeOperation;
-import org.oxff.operation.timestamp.conversion.CurrentTimestampOperation;
-import org.oxff.operation.timestamp.conversion.TimestampFromDateOperation;
-import org.oxff.operation.timestamp.conversion.TimestampToDateOperation;
-import org.oxff.operation.timestamp.format.TimestampFormatOperation;
-import org.oxff.operation.timestamp.utc.TimestampToUtcOperation;
-import org.oxff.operation.timestamp.utc.TimestampFromUtcOperation;
+import org.oxff.operation.timestamp.GetCurrentTimeOperation;
+import org.oxff.operation.timestamp.TimestampToDatetimeOperation;
+import org.oxff.operation.timestamp.DatetimeToTimestampOperation;
 import org.oxff.operation.generator.RandomPasswordOperation;
 
 import java.util.*;
@@ -62,12 +59,9 @@ public class OperationFactory {
             new QRCodeGenerateOperation(),
             new QRCodeDecodeOperation(),
             // 时间戳操作
-            new CurrentTimestampOperation(),
-            new TimestampFromDateOperation(),
-            new TimestampToDateOperation(),
-            new TimestampFormatOperation(),
-            new TimestampToUtcOperation(),
-            new TimestampFromUtcOperation(),
+            new GetCurrentTimeOperation(),
+            new TimestampToDatetimeOperation(),
+            new DatetimeToTimestampOperation(),
             // JWT操作
             new JwtEncodeOperation(),
             new JwtDecodeOperation(),
@@ -142,24 +136,6 @@ public class OperationFactory {
 
             case "JWT编码":
                 return "JWT编码提示: 密钥应使用Base64编码. RSA/EC算法密钥应为PKCS#8格式私钥";
-
-            case "时间戳转日期":
-                return "时间戳转日期提示: 支持秒级(10位)或毫秒级(13位)时间戳. 第二行可输入自定义格式, 如: yyyy/MM/dd HH:mm:ss";
-
-            case "日期转时间戳":
-                return "日期转时间戳提示: 第一行输入日期, 第二行可输入自定义格式. 默认格式: yyyy-MM-dd HH:mm:ss";
-
-            case "时间戳格式化":
-                return "时间戳格式化提示: 第一行输入时间戳, 第二行输入目标格式. 如: yyyy/MM/dd HH:mm:ss";
-
-            case "时间戳转UTC时间":
-                return "时间戳转UTC时间提示: 将时间戳转换为UTC时间和本地时间对比";
-
-            case "UTC时间转时间戳":
-                return "UTC时间转时间戳提示: 输入UTC时间将被视为UTC时区. 第一行输入时间, 第二行可输入自定义格式";
-
-            case "当前时间戳":
-                return "当前时间戳提示: 可通过上方下拉框切换不同时区";
 
             default:
                 return null;

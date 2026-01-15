@@ -66,6 +66,31 @@ public class UIComponentRegistry {
     // 输入卡片容器
     public static final String INPUT_CARDS_CONTAINER = "inputCardsContainer";
 
+    // 时间戳配置相关组件
+    // 获取当前时间配置
+    public static final String GET_CURRENT_TIMEZONE_COMBO_BOX = "getCurrentTimezoneComboBox";
+    public static final String GET_CURRENT_DATETIME_RADIO = "getCurrentDatetimeRadio";
+    public static final String GET_CURRENT_TIMESTAMP_RADIO = "getCurrentTimestampRadio";
+    public static final String GET_CURRENT_DATE_FORMAT_COMBO_BOX = "getCurrentDateFormatComboBox";
+    public static final String GET_CURRENT_DATE_FORMAT_TEXT_FIELD = "getCurrentDateFormatTextField";
+    public static final String GET_CURRENT_10_DIGITS_RADIO = "getCurrent10DigitsRadio";
+    public static final String GET_CURRENT_13_DIGITS_RADIO = "getCurrent13DigitsRadio";
+    public static final String GET_CURRENT_PAD_WITH_ZERO_CHECK_BOX = "getCurrentPadWithZeroCheckBox";
+
+    // 时间戳转日期配置
+    public static final String TO_DATETIME_TIMEZONE_COMBO_BOX = "toDatetimeTimezoneComboBox";
+    public static final String TO_DATETIME_FORMAT_COMBO_BOX = "toDatetimeFormatComboBox";
+    public static final String TO_DATETIME_FORMAT_TEXT_FIELD = "toDatetimeFormatTextField";
+    public static final String TIMESTAMP_TO_DATETIME_INPUT_FIELD = "timestampToDatetimeInputField";
+
+    // 日期转时间戳配置
+    public static final String TO_TIMESTAMP_FORMAT_COMBO_BOX = "toTimestampFormatComboBox";
+    public static final String TO_TIMESTAMP_FORMAT_TEXT_FIELD = "toTimestampFormatTextField";
+    public static final String TO_TIMESTAMP_10_DIGITS_RADIO = "toTimestamp10DigitsRadio";
+    public static final String TO_TIMESTAMP_13_DIGITS_RADIO = "toTimestamp13DigitsRadio";
+    public static final String TO_TIMESTAMP_PAD_WITH_ZERO_CHECK_BOX = "toTimestampPadWithZeroCheckBox";
+    public static final String DATETIME_TO_TIMESTAMP_INPUT_FIELD = "datetimeToTimestampInputField";
+
     /**
      * 注册组件
      * @param name 组件名称

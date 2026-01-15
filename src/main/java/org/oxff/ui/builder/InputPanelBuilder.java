@@ -25,10 +25,14 @@ public class InputPanelBuilder {
         public JPanel inputButtonPanel;
         public JPanel textInputPanel;
         public JPanel imageInputPanel;
-        public JPanel timezoneInputPanel;
         public JPanel baseEncodingInputPanel;
         public JPanel passwordGeneratorInputPanel;
         public JPanel automationInputPanel;
+
+        // 时间戳配置面板
+        public JPanel getCurrentTimeConfigPanel;
+        public JPanel timestampToDatetimeConfigPanel;
+        public JPanel datetimeToTimestampConfigPanel;
     }
 
     /**
@@ -48,10 +52,14 @@ public class InputPanelBuilder {
         ConfigPanelBuilder.ConfigPanelsResult configResult = configBuilder.buildAllConfigPanels();
 
         result.imageInputPanel = configResult.imageInputPanel;
-        result.timezoneInputPanel = configResult.timezoneConfigPanel;
         result.baseEncodingInputPanel = configResult.baseEncodingConfigPanel;
         result.passwordGeneratorInputPanel = configResult.passwordGeneratorConfigPanel;
         result.automationInputPanel = configResult.automationConfigPanel;
+
+        // 添加时间戳配置面板
+        result.getCurrentTimeConfigPanel = configResult.getCurrentTimeConfigPanel;
+        result.timestampToDatetimeConfigPanel = configResult.timestampToDatetimeConfigPanel;
+        result.datetimeToTimestampConfigPanel = configResult.datetimeToTimestampConfigPanel;
 
         return result;
     }

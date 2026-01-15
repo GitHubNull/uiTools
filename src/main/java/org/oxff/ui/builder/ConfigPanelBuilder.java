@@ -22,9 +22,13 @@ public class ConfigPanelBuilder {
     public static class ConfigPanelsResult {
         public JPanel automationConfigPanel;
         public JPanel imageInputPanel;
-        public JPanel timezoneConfigPanel;
         public JPanel baseEncodingConfigPanel;
         public JPanel passwordGeneratorConfigPanel;
+
+        // 时间戳配置面板
+        public JPanel getCurrentTimeConfigPanel;
+        public JPanel timestampToDatetimeConfigPanel;
+        public JPanel datetimeToTimestampConfigPanel;
 
         // 自动化配置组件
         public JSpinner delaySecondsSpinner;
@@ -37,8 +41,10 @@ public class ConfigPanelBuilder {
         public JButton pasteImageButton;
         public JLabel selectedImageLabel;
 
-        // 时区组件
-        public JComboBox<String> timezoneComboBox;
+        // Base编码组件
+        public JComboBox<String> baseEncodingComboBox;
+        public JButton selectFileButton;
+        public JLabel selectedFileLabel;
     }
 
     /**
@@ -58,11 +64,21 @@ public class ConfigPanelBuilder {
         result.pasteImageButton = (JButton) registry.getComponent(UIComponentRegistry.PASTE_IMAGE_BUTTON);
         result.selectedImageLabel = (JLabel) registry.getComponent(UIComponentRegistry.SELECTED_IMAGE_LABEL);
 
-        result.timezoneConfigPanel = createTimezoneConfigPanel();
-        result.timezoneComboBox = (JComboBox<String>) registry.getComponent(UIComponentRegistry.TIMEZONE_COMBO_BOX);
-
         result.baseEncodingConfigPanel = createBaseEncodingConfigPanel();
+        result.baseEncodingComboBox = (JComboBox<String>) registry.getComponent(UIComponentRegistry.BASE_ENCODING_COMBO_BOX);
+        result.selectFileButton = (JButton) registry.getComponent(UIComponentRegistry.SELECT_FILE_BUTTON);
+        result.selectedFileLabel = (JLabel) registry.getComponent(UIComponentRegistry.SELECTED_FILE_LABEL);
+
         result.passwordGeneratorConfigPanel = createPasswordGeneratorConfigPanel();
+
+        // 使用 TimestampConfigPanelBuilder 创建时间戳配置面板
+        TimestampConfigPanelBuilder timestampBuilder = new TimestampConfigPanelBuilder(registry);
+        TimestampConfigPanelBuilder.TimestampConfigPanelsResult timestampResult =
+            timestampBuilder.buildAllTimestampConfigPanels();
+
+        result.getCurrentTimeConfigPanel = timestampResult.getCurrentTimeConfigPanel;
+        result.timestampToDatetimeConfigPanel = timestampResult.timestampToDatetimeConfigPanel;
+        result.datetimeToTimestampConfigPanel = timestampResult.datetimeToTimestampConfigPanel;
 
         return result;
     }
@@ -132,36 +148,6 @@ public class ConfigPanelBuilder {
 
         panel.add(imageInputButtonPanel, BorderLayout.NORTH);
         panel.add(selectedImageLabel, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    /**
-     * 创建时区选择面板
-     */
-    private JPanel createTimezoneConfigPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panel.setBorder(BorderFactory.createTitledBorder("时区选择"));
-
-        JLabel timezoneLabel = new JLabel("选择时区:");
-        JComboBox<String> timezoneComboBox = new JComboBox<>(new String[]{
-            "系统时区",
-            "UTC (协调世界时)",
-            "GMT (格林威治)",
-            "EST (美国东部)",
-            "PST (美国西部)",
-            "CET (欧洲中部)",
-            "GMT (英国伦敦)",
-            "JST (日本)",
-            "AEST (澳大利亚东部)",
-            "IST (印度)",
-            "CST (中国)"
-        });
-        timezoneComboBox.setPreferredSize(new Dimension(200, 25));
-        registry.registerComponent(UIComponentRegistry.TIMEZONE_COMBO_BOX, timezoneComboBox);
-
-        panel.add(timezoneLabel);
-        panel.add(timezoneComboBox);
 
         return panel;
     }

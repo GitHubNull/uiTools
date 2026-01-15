@@ -71,6 +71,34 @@ public class EventHandler {
             }
         }
 
+        // 对于时间戳转日期操作，从单行输入框获取输入
+        if (operationValidator.requiresTimestampToDatetimeConfig(selectedOperation)) {
+            JTextField inputField = registry.getComponent(UIComponentRegistry.TIMESTAMP_TO_DATETIME_INPUT_FIELD);
+            if (inputField != null) {
+                inputText = inputField.getText().trim();
+            }
+            if (inputText.isEmpty()) {
+                JOptionPane.showMessageDialog(parent, "请输入时间戳",
+                    "提示", JOptionPane.WARNING_MESSAGE);
+                logManager.log("执行操作失败：未输入时间戳");
+                return;
+            }
+        }
+
+        // 对于日期转时间戳操作，从单行输入框获取输入
+        if (operationValidator.requiresDatetimeToTimestampConfig(selectedOperation)) {
+            JTextField inputField = registry.getComponent(UIComponentRegistry.DATETIME_TO_TIMESTAMP_INPUT_FIELD);
+            if (inputField != null) {
+                inputText = inputField.getText().trim();
+            }
+            if (inputText.isEmpty()) {
+                JOptionPane.showMessageDialog(parent, "请输入日期时间",
+                    "提示", JOptionPane.WARNING_MESSAGE);
+                logManager.log("执行操作失败：未输入日期时间");
+                return;
+            }
+        }
+
         // 对于Base编码操作，先获取图片路径作为输入文本
         if (operationValidator.requiresBaseEncodingConfig(selectedOperation)) {
             if (selectedImagePath != null && !selectedImagePath.isEmpty()) {
@@ -102,12 +130,6 @@ public class EventHandler {
             .inputText(inputText)
             .expressions(expressions)
             .imagePath(selectedImagePath);
-
-        // 处理时区选择
-        if (operationValidator.requiresTimezoneSelection(selectedOperation)) {
-            String selectedTimezone = (String) registry.getTimezoneComboBox().getSelectedItem();
-            builder.timezoneSelection(mapTimezoneToId(selectedTimezone));
-        }
 
         // 处理自动化操作配置
         if (operationValidator.isAutomationOperation(selectedOperation)) {
@@ -155,6 +177,57 @@ public class EventHandler {
             builder.passwordGeneratorConfig(new OperationExecutionContext.PasswordGeneratorConfig(
                 passwordLength, includeDigits, digitCount, includeUppercase, uppercaseCount,
                 includeLowercase, lowercaseCount, includeSpecialChars, specialCharCount, passwordCount));
+        }
+
+        // 处理获取当前时间配置
+        if (operationValidator.requiresGetCurrentTimeConfig(selectedOperation)) {
+            JComboBox<String> timezoneComboBox = registry.getComponent(UIComponentRegistry.GET_CURRENT_TIMEZONE_COMBO_BOX);
+            JRadioButton datetimeRadio = registry.getComponent(UIComponentRegistry.GET_CURRENT_DATETIME_RADIO);
+            JComboBox<String> dateFormatComboBox = registry.getComponent(UIComponentRegistry.GET_CURRENT_DATE_FORMAT_COMBO_BOX);
+            JTextField dateFormatTextField = registry.getComponent(UIComponentRegistry.GET_CURRENT_DATE_FORMAT_TEXT_FIELD);
+            JRadioButton digits10Radio = registry.getComponent(UIComponentRegistry.GET_CURRENT_10_DIGITS_RADIO);
+            JRadioButton digits13Radio = registry.getComponent(UIComponentRegistry.GET_CURRENT_13_DIGITS_RADIO);
+            JCheckBox padWithZeroCheckBox = registry.getComponent(UIComponentRegistry.GET_CURRENT_PAD_WITH_ZERO_CHECK_BOX);
+
+            String timezoneId = (String) timezoneComboBox.getSelectedItem();
+            String outputType = datetimeRadio.isSelected() ? "datetime" : "timestamp";
+            String dateFormat = "自定义".equals(dateFormatComboBox.getSelectedItem()) ?
+                dateFormatTextField.getText() : (String) dateFormatComboBox.getSelectedItem();
+            String timestampDigits = digits10Radio.isSelected() ? "10" : "13";
+            boolean padWithZero = padWithZeroCheckBox.isSelected();
+
+            builder.getCurrentTimeConfig(new OperationExecutionContext.GetCurrentTimeConfig(
+                timezoneId, outputType, dateFormat, timestampDigits, padWithZero));
+        }
+
+        // 处理时间戳转日期配置
+        if (operationValidator.requiresTimestampToDatetimeConfig(selectedOperation)) {
+            JComboBox<String> timezoneComboBox = registry.getComponent(UIComponentRegistry.TO_DATETIME_TIMEZONE_COMBO_BOX);
+            JComboBox<String> formatComboBox = registry.getComponent(UIComponentRegistry.TO_DATETIME_FORMAT_COMBO_BOX);
+            JTextField formatTextField = registry.getComponent(UIComponentRegistry.TO_DATETIME_FORMAT_TEXT_FIELD);
+
+            String timezoneId = (String) timezoneComboBox.getSelectedItem();
+            String dateFormat = "自定义".equals(formatComboBox.getSelectedItem()) ?
+                formatTextField.getText() : (String) formatComboBox.getSelectedItem();
+
+            builder.timestampToDatetimeConfig(new OperationExecutionContext.TimestampToDatetimeConfig(timezoneId, dateFormat));
+        }
+
+        // 处理日期转时间戳配置
+        if (operationValidator.requiresDatetimeToTimestampConfig(selectedOperation)) {
+            JComboBox<String> formatComboBox = registry.getComponent(UIComponentRegistry.TO_TIMESTAMP_FORMAT_COMBO_BOX);
+            JTextField formatTextField = registry.getComponent(UIComponentRegistry.TO_TIMESTAMP_FORMAT_TEXT_FIELD);
+            JRadioButton digits10Radio = registry.getComponent(UIComponentRegistry.TO_TIMESTAMP_10_DIGITS_RADIO);
+            JRadioButton digits13Radio = registry.getComponent(UIComponentRegistry.TO_TIMESTAMP_13_DIGITS_RADIO);
+            JCheckBox padWithZeroCheckBox = registry.getComponent(UIComponentRegistry.TO_TIMESTAMP_PAD_WITH_ZERO_CHECK_BOX);
+
+            String inputFormat = "自定义".equals(formatComboBox.getSelectedItem()) ?
+                formatTextField.getText() : (String) formatComboBox.getSelectedItem();
+            String outputDigits = digits10Radio.isSelected() ? "10" : "13";
+            boolean padWithZero = padWithZeroCheckBox.isSelected();
+
+            builder.datetimeToTimestampConfig(new OperationExecutionContext.DatetimeToTimestampConfig(
+                inputFormat, outputDigits, padWithZero));
         }
 
         OperationExecutionContext context = builder.build();

@@ -77,8 +77,12 @@ public class UIStateManager {
     private String determineInputPanelType(String operationName) {
         if (validator.requiresImageInput(operationName)) {
             return "IMAGE";
-        } else if (validator.requiresTimezoneSelection(operationName)) {
-            return "TIMEZONE";
+        } else if (validator.requiresGetCurrentTimeConfig(operationName)) {
+            return "GET_CURRENT_TIME";
+        } else if (validator.requiresTimestampToDatetimeConfig(operationName)) {
+            return "TIMESTAMP_TO_DATETIME";
+        } else if (validator.requiresDatetimeToTimestampConfig(operationName)) {
+            return "DATETIME_TO_TIMESTAMP";
         } else if (validator.requiresBaseEncodingConfig(operationName)) {
             return "BASE_ENCODING";
         } else if (validator.requiresPasswordGeneratorConfig(operationName)) {

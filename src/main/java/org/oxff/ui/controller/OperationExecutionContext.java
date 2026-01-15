@@ -13,6 +13,9 @@ public class OperationExecutionContext {
     private final String imagePath;
     private final BaseEncodingConfig baseEncodingConfig;
     private final PasswordGeneratorConfig passwordGeneratorConfig;
+    private final GetCurrentTimeConfig getCurrentTimeConfig;
+    private final TimestampToDatetimeConfig timestampToDatetimeConfig;
+    private final DatetimeToTimestampConfig datetimeToTimestampConfig;
 
     private OperationExecutionContext(Builder builder) {
         this.operationName = builder.operationName;
@@ -23,6 +26,9 @@ public class OperationExecutionContext {
         this.imagePath = builder.imagePath;
         this.baseEncodingConfig = builder.baseEncodingConfig;
         this.passwordGeneratorConfig = builder.passwordGeneratorConfig;
+        this.getCurrentTimeConfig = builder.getCurrentTimeConfig;
+        this.timestampToDatetimeConfig = builder.timestampToDatetimeConfig;
+        this.datetimeToTimestampConfig = builder.datetimeToTimestampConfig;
     }
 
     public String getOperationName() {
@@ -61,6 +67,18 @@ public class OperationExecutionContext {
         return passwordGeneratorConfig;
     }
 
+    public GetCurrentTimeConfig getGetCurrentTimeConfig() {
+        return getCurrentTimeConfig;
+    }
+
+    public TimestampToDatetimeConfig getTimestampToDatetimeConfig() {
+        return timestampToDatetimeConfig;
+    }
+
+    public DatetimeToTimestampConfig getDatetimeToTimestampConfig() {
+        return datetimeToTimestampConfig;
+    }
+
     /**
      * 构建器模式创建上下文对象
      */
@@ -73,6 +91,9 @@ public class OperationExecutionContext {
         private String imagePath;
         private BaseEncodingConfig baseEncodingConfig;
         private PasswordGeneratorConfig passwordGeneratorConfig;
+        private GetCurrentTimeConfig getCurrentTimeConfig;
+        private TimestampToDatetimeConfig timestampToDatetimeConfig;
+        private DatetimeToTimestampConfig datetimeToTimestampConfig;
 
         public Builder operationName(String operationName) {
             this.operationName = operationName;
@@ -111,6 +132,21 @@ public class OperationExecutionContext {
 
         public Builder passwordGeneratorConfig(PasswordGeneratorConfig passwordGeneratorConfig) {
             this.passwordGeneratorConfig = passwordGeneratorConfig;
+            return this;
+        }
+
+        public Builder getCurrentTimeConfig(GetCurrentTimeConfig getCurrentTimeConfig) {
+            this.getCurrentTimeConfig = getCurrentTimeConfig;
+            return this;
+        }
+
+        public Builder timestampToDatetimeConfig(TimestampToDatetimeConfig timestampToDatetimeConfig) {
+            this.timestampToDatetimeConfig = timestampToDatetimeConfig;
+            return this;
+        }
+
+        public Builder datetimeToTimestampConfig(DatetimeToTimestampConfig datetimeToTimestampConfig) {
+            this.datetimeToTimestampConfig = datetimeToTimestampConfig;
             return this;
         }
 
@@ -232,6 +268,94 @@ public class OperationExecutionContext {
 
         public int getPasswordCount() {
             return passwordCount;
+        }
+    }
+
+    /**
+     * 获取当前时间配置
+     */
+    public static class GetCurrentTimeConfig {
+        private final String timezoneId;
+        private final String outputType;
+        private final String dateFormat;
+        private final String timestampDigits;
+        private final boolean padWithZero;
+
+        public GetCurrentTimeConfig(String timezoneId, String outputType, String dateFormat,
+                                   String timestampDigits, boolean padWithZero) {
+            this.timezoneId = timezoneId;
+            this.outputType = outputType;
+            this.dateFormat = dateFormat;
+            this.timestampDigits = timestampDigits;
+            this.padWithZero = padWithZero;
+        }
+
+        public String getTimezoneId() {
+            return timezoneId;
+        }
+
+        public String getOutputType() {
+            return outputType;
+        }
+
+        public String getDateFormat() {
+            return dateFormat;
+        }
+
+        public String getTimestampDigits() {
+            return timestampDigits;
+        }
+
+        public boolean isPadWithZero() {
+            return padWithZero;
+        }
+    }
+
+    /**
+     * 时间戳转日期配置
+     */
+    public static class TimestampToDatetimeConfig {
+        private final String timezoneId;
+        private final String dateFormat;
+
+        public TimestampToDatetimeConfig(String timezoneId, String dateFormat) {
+            this.timezoneId = timezoneId;
+            this.dateFormat = dateFormat;
+        }
+
+        public String getTimezoneId() {
+            return timezoneId;
+        }
+
+        public String getDateFormat() {
+            return dateFormat;
+        }
+    }
+
+    /**
+     * 日期转时间戳配置
+     */
+    public static class DatetimeToTimestampConfig {
+        private final String inputFormat;
+        private final String outputDigits;
+        private final boolean padWithZero;
+
+        public DatetimeToTimestampConfig(String inputFormat, String outputDigits, boolean padWithZero) {
+            this.inputFormat = inputFormat;
+            this.outputDigits = outputDigits;
+            this.padWithZero = padWithZero;
+        }
+
+        public String getInputFormat() {
+            return inputFormat;
+        }
+
+        public String getOutputDigits() {
+            return outputDigits;
+        }
+
+        public boolean isPadWithZero() {
+            return padWithZero;
         }
     }
 }

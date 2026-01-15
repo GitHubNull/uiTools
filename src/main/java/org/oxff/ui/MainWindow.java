@@ -255,9 +255,13 @@ public class MainWindow extends JFrame {
         // 保存配置面板引用（用于事件处理）
         automationConfigPanel = inputResult.automationInputPanel;
         imageInputPanel = inputResult.imageInputPanel;
-        timezoneConfigPanel = inputResult.timezoneInputPanel;
         baseEncodingConfigPanel = inputResult.baseEncodingInputPanel;
         passwordGeneratorConfigPanel = inputResult.passwordGeneratorInputPanel;
+
+        // 保存时间戳配置面板引用
+        JPanel getCurrentTimeConfigPanel = inputResult.getCurrentTimeConfigPanel;
+        JPanel timestampToDatetimeConfigPanel = inputResult.timestampToDatetimeConfigPanel;
+        JPanel datetimeToTimestampConfigPanel = inputResult.datetimeToTimestampConfigPanel;
 
         // 获取配置面板组件引用
         ConfigPanelBuilder configBuilder = new ConfigPanelBuilder(registry);
@@ -268,16 +272,17 @@ public class MainWindow extends JFrame {
         selectImageButton = (JButton) registry.getComponent(UIComponentRegistry.SELECT_IMAGE_BUTTON);
         pasteImageButton = (JButton) registry.getComponent(UIComponentRegistry.PASTE_IMAGE_BUTTON);
         selectedImageLabel = (JLabel) registry.getComponent(UIComponentRegistry.SELECTED_IMAGE_LABEL);
-        timezoneComboBox = (JComboBox<String>) registry.getComponent(UIComponentRegistry.TIMEZONE_COMBO_BOX);
 
         // 创建输入卡片容器
         JPanel inputCardsContainer = new JPanel(new CardLayout());
         inputCardsContainer.add(inputResult.textInputPanel, "TEXT");
         inputCardsContainer.add(inputResult.imageInputPanel, "IMAGE");
-        inputCardsContainer.add(inputResult.timezoneInputPanel, "TIMEZONE");
         inputCardsContainer.add(inputResult.baseEncodingInputPanel, "BASE_ENCODING");
         inputCardsContainer.add(inputResult.passwordGeneratorInputPanel, "PASSWORD_GENERATOR");
         inputCardsContainer.add(inputResult.automationInputPanel, "AUTOMATION");
+        inputCardsContainer.add(getCurrentTimeConfigPanel, "GET_CURRENT_TIME");
+        inputCardsContainer.add(timestampToDatetimeConfigPanel, "TIMESTAMP_TO_DATETIME");
+        inputCardsContainer.add(datetimeToTimestampConfigPanel, "DATETIME_TO_TIMESTAMP");
 
         // 注册到注册表
         registry.registerComponent(UIComponentRegistry.INPUT_CARDS_CONTAINER, inputCardsContainer);
