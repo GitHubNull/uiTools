@@ -18,10 +18,12 @@ import org.oxff.ui.builder.PasswordConfigListener;
 import org.oxff.ui.controller.*;
 import org.oxff.ui.handler.ClipboardManager;
 import org.oxff.ui.handler.EventHandler;
+import org.oxff.ui.handler.TextFileManager;
 import org.oxff.ui.image.ImageDisplayManager;
 import org.oxff.ui.image.ImageFileManager;
 import org.oxff.ui.util.KeyboardShortcutManager;
 import org.oxff.ui.util.LogManager;
+import org.oxff.ui.util.SettingsManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -51,6 +53,8 @@ public class MainWindow extends JFrame {
     private final UIStateManager uiStateManager;
     private ImageDisplayManager imageDisplayManager;
     private final ImageFileManager imageFileManager;
+    private final TextFileManager textFileManager;
+    private final SettingsManager settingsManager;
     private EventHandler eventHandler;
 
     // UI组件引用（用于布局构建）
@@ -83,6 +87,14 @@ public class MainWindow extends JFrame {
     private JPanel outputCardsPanel;
     private JSplitPane outputExpressionSplitPane;
 
+    // 输出面板新增组件
+    private JCheckBox outputWrapCheckBox;
+    private JButton saveOutputButton;
+    private JCheckBox autoSaveCheckBox;
+    private JCheckBox directFileOutputCheckBox;
+    private JButton selectAutoSaveDirButton;
+    private JLabel currentAutoSaveDirLabel;
+
     public MainWindow() {
         // 初始化组件注册表
         this.registry = new UIComponentRegistry();
@@ -95,6 +107,8 @@ public class MainWindow extends JFrame {
         this.operationExecutor = new OperationExecutor(operationValidator);
         this.uiStateManager = new UIStateManager(registry, operationValidator);
         this.imageFileManager = new ImageFileManager();
+        this.textFileManager = new TextFileManager();
+        this.settingsManager = new SettingsManager();
 
         initializeUI();
     }
@@ -318,6 +332,14 @@ public class MainWindow extends JFrame {
         copyOutputButton = result.copyOutputButton;
         outputPanel = result.outputPanel;
 
+        // 保存输出面板新增组件引用
+        outputWrapCheckBox = result.outputWrapCheckBox;
+        saveOutputButton = result.saveOutputButton;
+        autoSaveCheckBox = result.autoSaveCheckBox;
+        directFileOutputCheckBox = result.directFileOutputCheckBox;
+        selectAutoSaveDirButton = result.selectAutoSaveDirButton;
+        currentAutoSaveDirLabel = result.currentAutoSaveDirLabel;
+
         // 保存图片按钮引用用于事件监听
         JButton saveImageButton = result.saveImageButton;
         JButton copyImageButton = result.copyImageButton;
@@ -362,6 +384,8 @@ public class MainWindow extends JFrame {
             uiStateManager,
             imageDisplayManager,
             imageFileManager,
+            textFileManager,
+            settingsManager,
             operationName -> {}
         );
 
@@ -410,6 +434,42 @@ public class MainWindow extends JFrame {
         }
         if (copyImageButton != null) {
             copyImageButton.addActionListener(e -> eventHandler.handleCopyImage(this));
+        }
+
+        // 输出框换行复选框事件
+        if (outputWrapCheckBox != null) {
+            outputWrapCheckBox.addActionListener(e ->
+                eventHandler.handleOutputWrapToggle(outputWrapCheckBox.isSelected()));
+        }
+
+        // 保存输出按钮事件
+        if (saveOutputButton != null) {
+            saveOutputButton.addActionListener(e -> eventHandler.handleSaveOutput(this));
+        }
+
+        // 自动保存复选框事件
+        if (autoSaveCheckBox != null) {
+            autoSaveCheckBox.addActionListener(e ->
+                eventHandler.handleAutoSaveToggle(autoSaveCheckBox.isSelected()));
+        }
+
+        // 直接文件输出复选框事件
+        if (directFileOutputCheckBox != null) {
+            directFileOutputCheckBox.addActionListener(e ->
+                eventHandler.handleDirectFileOutputToggle(directFileOutputCheckBox.isSelected()));
+        }
+
+        // 选择自动保存目录按钮事件
+        if (selectAutoSaveDirButton != null) {
+            selectAutoSaveDirButton.addActionListener(e -> eventHandler.handleSelectAutoSaveDir(this));
+        }
+
+        // 启动时加载配置并更新UI
+        if (currentAutoSaveDirLabel != null) {
+            String currentDir = settingsManager.getAutoSaveDirectory();
+            if (currentDir != null) {
+                currentAutoSaveDirLabel.setText("当前: " + currentDir);
+            }
         }
     }
 

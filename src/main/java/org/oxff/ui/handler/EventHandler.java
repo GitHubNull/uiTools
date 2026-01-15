@@ -5,6 +5,7 @@ import org.oxff.ui.controller.*;
 import org.oxff.ui.image.ImageDisplayManager;
 import org.oxff.ui.image.ImageFileManager;
 import org.oxff.ui.util.LogManager;
+import org.oxff.ui.util.SettingsManager;
 import org.oxff.core.OperationCategory;
 import org.oxff.core.OperationFactory;
 import org.oxff.operation.Operation;
@@ -26,6 +27,8 @@ public class EventHandler {
     private final UIStateManager uiStateManager;
     private final ImageDisplayManager imageDisplayManager;
     private final ImageFileManager imageFileManager;
+    private final TextFileManager textFileManager;
+    private final SettingsManager settingsManager;
     private final ExecuteCallback executeCallback;
 
     private String selectedOperation;
@@ -39,6 +42,8 @@ public class EventHandler {
                         UIStateManager uiStateManager,
                         ImageDisplayManager imageDisplayManager,
                         ImageFileManager imageFileManager,
+                        TextFileManager textFileManager,
+                        SettingsManager settingsManager,
                         ExecuteCallback executeCallback) {
         this.registry = registry;
         this.logManager = logManager;
@@ -48,6 +53,8 @@ public class EventHandler {
         this.uiStateManager = uiStateManager;
         this.imageDisplayManager = imageDisplayManager;
         this.imageFileManager = imageFileManager;
+        this.textFileManager = textFileManager;
+        this.settingsManager = settingsManager;
         this.executeCallback = executeCallback;
     }
 
@@ -250,6 +257,25 @@ public class EventHandler {
                     logManager.log(result.getResult());
                 } else {
                     displayText(result.getResult());
+                }
+
+                // 检查自动保存选项
+                JCheckBox autoSaveCheckBox = registry.getComponent(UIComponentRegistry.AUTO_SAVE_CHECK_BOX);
+                if (autoSaveCheckBox != null && autoSaveCheckBox.isSelected()) {
+                    try {
+                        String filePath = textFileManager.autoSaveText(result.getResult(), settingsManager.getAutoSaveDirectory(), selectedOperation);
+                        logManager.log("结果已自动保存到: " + filePath);
+                    } catch (Exception ex) {
+                        logManager.logError("自动保存失败", ex);
+                    }
+                }
+
+                // 检查大结果直接输出模式
+                JCheckBox directFileCheckBox = registry.getComponent(UIComponentRegistry.DIRECT_FILE_OUTPUT_CHECK_BOX);
+                if (directFileCheckBox != null && directFileCheckBox.isSelected() &&
+                    textFileManager.isLargeResult(result.getResult())) {
+                    handleDirectFileOutput(parent, result.getResult());
+                    return; // 跳过常规显示
                 }
             }
 
@@ -513,9 +539,121 @@ public class EventHandler {
     }
 
     /**
+     * 处理输出换行切换事件
+     * @param wrap 是否自动换行
+     */
+    public void handleOutputWrapToggle(boolean wrap) {
+        uiStateManager.toggleOutputLineWrap(wrap);
+        logManager.log(wrap ? "已启用输出框自动换行" : "已禁用输出框自动换行");
+    }
+
+    /**
+     * 处理保存输出事件（手动保存）
+     * @param parent 父组件，用于对话框
+     */
+    public void handleSaveOutput(Component parent) {
+        String outputText = registry.getOutputTextArea().getText();
+        if (outputText == null || outputText.isEmpty()) {
+            JOptionPane.showMessageDialog(parent, "没有可保存的输出内容",
+                "提示", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String defaultName = textFileManager.suggestFileName(selectedOperation, "txt");
+        textFileManager.saveTextToFile(parent, outputText, defaultName, new TextFileManager.LogCallback() {
+            @Override
+            public void onLog(String message) {
+                logManager.log(message);
+            }
+
+            @Override
+            public void onError(String message, Exception e) {
+                logManager.logError(message, e);
+            }
+        });
+    }
+
+    /**
+     * 处理自动保存切换事件
+     * @param enabled 是否启用自动保存
+     */
+    public void handleAutoSaveToggle(boolean enabled) {
+        logManager.log(enabled ? "已启用自动保存" : "已禁用自动保存");
+    }
+
+    /**
+     * 处理直接文件输出切换事件
+     * @param enabled 是否启用直接输出
+     */
+    public void handleDirectFileOutputToggle(boolean enabled) {
+        logManager.log(enabled ? "已启用大结果直接输出到文件" : "已禁用大结果直接输出到文件");
+    }
+
+    /**
+     * 处理超大结果的直接文件输出
+     * @param parent 父组件，用于对话框
+     * @param result 结果文本
+     */
+    private void handleDirectFileOutput(Component parent, String result) {
+        JFileChooser fileChooser = new JFileChooser();
+        String defaultName = textFileManager.suggestFileName(selectedOperation, "txt");
+        fileChooser.setSelectedFile(new File(defaultName));
+
+        if (fileChooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
+            try {
+                String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+                if (!filePath.toLowerCase().endsWith(".txt")) {
+                    filePath += ".txt";
+                }
+
+                textFileManager.saveToPath(result, filePath);
+                logManager.log("大结果已直接输出到文件: " + filePath + " (文件大小: " + result.length() + " 字符)");
+                registry.getOutputTextArea().setText("[大结果已保存到文件]\n" + filePath + "\n文件大小: " + result.length() + " 字符");
+            } catch (Exception ex) {
+                logManager.logError("直接文件输出失败", ex);
+                JOptionPane.showMessageDialog(parent, "文件保存失败: " + ex.getMessage(),
+                    "错误", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            // 用户取消保存，仍然在UI中显示
+            displayText(result);
+        }
+    }
+
+    /**
      * 执行回调接口，用于 EventHandler 与主控制器通信
      */
     public interface ExecuteCallback {
         void onExecute(String operationName);
+    }
+
+    /**
+     * 处理选择自动保存目录事件
+     * @param parent 父组件，用于对话框
+     */
+    public void handleSelectAutoSaveDir(Component parent) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("选择自动保存目录");
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        // 设置初始路径
+        String currentDir = settingsManager.getAutoSaveDirectory();
+        if (currentDir != null) {
+            fileChooser.setCurrentDirectory(new File(currentDir));
+        } else {
+            fileChooser.setCurrentDirectory(new File(settingsManager.getDefaultAutoSaveDirectory()));
+        }
+
+        if (fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+            File selectedDir = fileChooser.getSelectedFile();
+            settingsManager.setAutoSaveDirectory(selectedDir.getAbsolutePath());
+            logManager.log("自动保存目录已更新: " + selectedDir.getAbsolutePath());
+
+            // 更新显示标签
+            JLabel label = registry.getComponent(UIComponentRegistry.CURRENT_AUTO_SAVE_DIR_LABEL);
+            if (label != null) {
+                label.setText("当前: " + selectedDir.getAbsolutePath());
+            }
+        }
     }
 }

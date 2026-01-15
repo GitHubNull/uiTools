@@ -40,6 +40,16 @@ public class UIComponentRegistry {
     public static final String IMAGE_DISPLAY_LABEL = "imageDisplayLabel";
     public static final String OUTPUT_EXPRESSION_SPLIT_PANE = "outputExpressionSplitPane";
 
+    // 输出面板特定组件
+    public static final String OUTPUT_WRAP_CHECK_BOX = "outputWrapCheckBox";
+    public static final String SAVE_OUTPUT_BUTTON = "saveOutputButton";
+    public static final String AUTO_SAVE_CHECK_BOX = "autoSaveCheckBox";
+    public static final String DIRECT_FILE_OUTPUT_CHECK_BOX = "directFileOutputCheckBox";
+
+    // 自动保存目录配置相关组件
+    public static final String SELECT_AUTO_SAVE_DIR_BUTTON = "selectAutoSaveDirButton";
+    public static final String CURRENT_AUTO_SAVE_DIR_LABEL = "currentAutoSaveDirLabel";
+
     // 自动化配置相关组件
     public static final String DELAY_SECONDS_SPINNER = "delaySecondsSpinner";
     public static final String CHAR_INTERVAL_MS_SPINNER = "charIntervalMsSpinner";
@@ -205,6 +215,38 @@ public class UIComponentRegistry {
      */
     public JPanel getOutputCardsPanel() {
         return getComponent(OUTPUT_CARDS_PANEL);
+    }
+
+    /**
+     * 获取输出换行复选框
+     * @return 输出换行复选框
+     */
+    public JCheckBox getOutputWrapCheckBox() {
+        return getComponent(OUTPUT_WRAP_CHECK_BOX);
+    }
+
+    /**
+     * 获取保存输出按钮
+     * @return 保存输出按钮
+     */
+    public JButton getSaveOutputButton() {
+        return getComponent(SAVE_OUTPUT_BUTTON);
+    }
+
+    /**
+     * 获取自动保存复选框
+     * @return 自动保存复选框
+     */
+    public JCheckBox getAutoSaveCheckBox() {
+        return getComponent(AUTO_SAVE_CHECK_BOX);
+    }
+
+    /**
+     * 获取直接文件输出复选框
+     * @return 直接文件输出复选框
+     */
+    public JCheckBox getDirectFileOutputCheckBox() {
+        return getComponent(DIRECT_FILE_OUTPUT_CHECK_BOX);
     }
 
     /**

@@ -29,6 +29,14 @@ public class OutputPanelBuilder {
         public JButton copyOutputButton;
         public JButton saveImageButton;
         public JButton copyImageButton;
+
+        // 新增输出面板组件
+        public JCheckBox outputWrapCheckBox;
+        public JButton saveOutputButton;
+        public JCheckBox autoSaveCheckBox;
+        public JCheckBox directFileOutputCheckBox;
+        public JButton selectAutoSaveDirButton;
+        public JLabel currentAutoSaveDirLabel;
     }
 
     /**
@@ -45,11 +53,8 @@ public class OutputPanelBuilder {
         JPanel textOutputCard = new JPanel(new BorderLayout());
         textOutputCard.setBorder(BorderFactory.createTitledBorder("输出"));
 
-        // 输出区域按钮面板
-        JPanel outputButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        result.copyOutputButton = new JButton("复制");
-
-        outputButtonPanel.add(result.copyOutputButton);
+        // 输出区域按钮面板（扩展版）
+        JPanel outputButtonPanel = createOutputButtonPanel(result);
 
         // 使用RSyntaxTextArea替换自定义的LineNumberTextArea
         RSyntaxTextArea outputTextArea = new RSyntaxTextArea();
@@ -67,6 +72,74 @@ public class OutputPanelBuilder {
         textOutputCard.add(outputScrollPane, BorderLayout.CENTER);
 
         // 图片输出卡片
+        JPanel imageOutputCard = createImageOutputCard(result);
+
+        // 将两个卡片添加到卡片面板
+        result.cardsPanel.add(textOutputCard, "TEXT");
+        result.cardsPanel.add(imageOutputCard, "IMAGE");
+
+        // 默认显示文本输出
+        result.cardLayout.show(result.cardsPanel, "TEXT");
+
+        result.outputPanel = result.cardsPanel;
+        return result;
+    }
+
+    /**
+     * 创建输出按钮面板（新方法）
+     */
+    private JPanel createOutputButtonPanel(OutputPanelResult result) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        // 现有按钮
+        result.copyOutputButton = new JButton("复制");
+        panel.add(result.copyOutputButton);
+
+        // 新增保存按钮
+        result.saveOutputButton = new JButton("保存文本");
+        panel.add(result.saveOutputButton);
+
+        // 分隔线
+        panel.add(new JSeparator(SwingConstants.VERTICAL));
+
+        // 新增复选框
+        result.outputWrapCheckBox = new JCheckBox("自动换行");
+        panel.add(result.outputWrapCheckBox);
+
+        result.autoSaveCheckBox = new JCheckBox("自动保存");
+        panel.add(result.autoSaveCheckBox);
+
+        // 分隔线
+        panel.add(new JSeparator(SwingConstants.VERTICAL));
+
+        // 选择目录按钮
+        result.selectAutoSaveDirButton = new JButton("选择目录");
+        panel.add(result.selectAutoSaveDirButton);
+
+        // 当前目录显示标签
+        result.currentAutoSaveDirLabel = new JLabel("默认: ~/uiTools_outputs");
+        result.currentAutoSaveDirLabel.setForeground(Color.GRAY);
+        panel.add(result.currentAutoSaveDirLabel);
+
+        result.directFileOutputCheckBox = new JCheckBox("大结果直接输出");
+        panel.add(result.directFileOutputCheckBox);
+
+        // 注册组件到注册表
+        registry.registerComponent(UIComponentRegistry.COPY_OUTPUT_BUTTON, result.copyOutputButton);
+        registry.registerComponent(UIComponentRegistry.SAVE_OUTPUT_BUTTON, result.saveOutputButton);
+        registry.registerComponent(UIComponentRegistry.OUTPUT_WRAP_CHECK_BOX, result.outputWrapCheckBox);
+        registry.registerComponent(UIComponentRegistry.AUTO_SAVE_CHECK_BOX, result.autoSaveCheckBox);
+        registry.registerComponent(UIComponentRegistry.SELECT_AUTO_SAVE_DIR_BUTTON, result.selectAutoSaveDirButton);
+        registry.registerComponent(UIComponentRegistry.CURRENT_AUTO_SAVE_DIR_LABEL, result.currentAutoSaveDirLabel);
+        registry.registerComponent(UIComponentRegistry.DIRECT_FILE_OUTPUT_CHECK_BOX, result.directFileOutputCheckBox);
+
+        return panel;
+    }
+
+    /**
+     * 创建图片输出卡片（提取方法）
+     */
+    private JPanel createImageOutputCard(OutputPanelResult result) {
         JPanel imageOutputCard = new JPanel(new BorderLayout());
         imageOutputCard.setBorder(BorderFactory.createTitledBorder("图片输出"));
 
@@ -88,14 +161,6 @@ public class OutputPanelBuilder {
         imageButtonPanel.add(result.copyImageButton);
         imageOutputCard.add(imageButtonPanel, BorderLayout.NORTH);
 
-        // 将两个卡片添加到卡片面板
-        result.cardsPanel.add(textOutputCard, "TEXT");
-        result.cardsPanel.add(imageOutputCard, "IMAGE");
-
-        // 默认显示文本输出
-        result.cardLayout.show(result.cardsPanel, "TEXT");
-
-        result.outputPanel = result.cardsPanel;
-        return result;
+        return imageOutputCard;
     }
 }

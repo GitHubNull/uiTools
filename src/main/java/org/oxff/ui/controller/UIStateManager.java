@@ -154,4 +154,25 @@ public class UIStateManager {
             expressionTextArea.setWrapStyleWord(wrap);
         }
     }
+
+    /**
+     * 切换输出框独立的自动换行状态
+     * @param wrap 是否自动换行
+     */
+    public void toggleOutputLineWrap(boolean wrap) {
+        RSyntaxTextArea outputTextArea = registry.getOutputTextArea();
+        if (outputTextArea != null) {
+            outputTextArea.setLineWrap(wrap);
+            outputTextArea.setWrapStyleWord(wrap);
+        }
+    }
+
+    /**
+     * 获取输出框当前换行状态
+     * @return 是否启用换行
+     */
+    public boolean isOutputLineWrapEnabled() {
+        RSyntaxTextArea outputTextArea = registry.getOutputTextArea();
+        return outputTextArea != null && outputTextArea.getLineWrap();
+    }
 }
