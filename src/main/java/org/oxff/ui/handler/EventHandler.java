@@ -32,7 +32,9 @@ public class EventHandler {
     private final ExecuteCallback executeCallback;
 
     private String selectedOperation;
-    private String selectedImagePath;
+    private String selectedImagePath;  // 二维码解析使用的图片路径
+    private String imageResizePath;    // 图片尺寸转换使用的图片路径
+    private String imageCompressPath;   // 图片压缩使用的图片路径
 
     public EventHandler(UIComponentRegistry registry,
                         LogManager logManager,
@@ -68,10 +70,26 @@ public class EventHandler {
 
         // 对于需要图片输入的操作，先获取图片路径作为输入文本
         if (operationValidator.requiresImageInput(selectedOperation)) {
-            if (selectedImagePath != null && !selectedImagePath.isEmpty()) {
-                inputText = selectedImagePath;
+            String imagePath = null;
+            String errorMessage = null;
+
+            // 根据操作类型获取正确的图片路径
+            if ("图片尺寸转换".equals(selectedOperation)) {
+                imagePath = imageResizePath;
+                errorMessage = "请选择图片文件进行尺寸转换";
+            } else if ("图片压缩".equals(selectedOperation)) {
+                imagePath = imageCompressPath;
+                errorMessage = "请选择图片文件进行压缩";
             } else {
-                JOptionPane.showMessageDialog(parent, "请选择二维码图片文件或使用粘贴图片功能",
+                // 二维码解析等其他操作
+                imagePath = selectedImagePath;
+                errorMessage = "请选择二维码图片文件或使用粘贴图片功能";
+            }
+
+            if (imagePath != null && !imagePath.isEmpty()) {
+                inputText = imagePath;
+            } else {
+                JOptionPane.showMessageDialog(parent, errorMessage,
                     "提示", JOptionPane.WARNING_MESSAGE);
                 logManager.log("执行操作失败：未选择图片");
                 return;
@@ -135,8 +153,16 @@ public class EventHandler {
         OperationExecutionContext.Builder builder = new OperationExecutionContext.Builder()
             .operationName(selectedOperation)
             .inputText(inputText)
-            .expressions(expressions)
-            .imagePath(selectedImagePath);
+            .expressions(expressions);
+
+        // 根据操作类型设置正确的图片路径
+        String contextImagePath = selectedImagePath;
+        if ("图片尺寸转换".equals(selectedOperation)) {
+            contextImagePath = imageResizePath;
+        } else if ("图片压缩".equals(selectedOperation)) {
+            contextImagePath = imageCompressPath;
+        }
+        builder.imagePath(contextImagePath);
 
         // 处理自动化操作配置
         if (operationValidator.isAutomationOperation(selectedOperation)) {
@@ -246,12 +272,18 @@ public class EventHandler {
                 logManager.log(hints);
             }
 
-            OperationExecutor.ExecutionResult result = operationExecutor.execute(context);
+            OperationExecutor.ExecutionResult result = operationExecutor.execute(context, registry);
 
             // 显示结果
             if (result.isImage()) {
                 imageDisplayManager.displayImage(result.getResult());
-                logManager.log("生成二维码图片: " + selectedOperation);
+
+                // 如果有额外信息（如压缩对比信息），显示到日志
+                if (result.hasAdditionalInfo()) {
+                    logManager.log(result.getAdditionalInfo());
+                } else {
+                    logManager.log("生成图片: " + selectedOperation);
+                }
             } else {
                 if (operation.getCategory() == OperationCategory.AUTOMATION) {
                     logManager.log(result.getResult());
@@ -433,17 +465,180 @@ public class EventHandler {
     }
 
     /**
+     * 处理图片尺寸转换的选择图片事件
+     * @param parent 父组件，用于对话框
+     */
+    public void handleSelectImageForResize(Component parent) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "图片文件", "png", "jpg", "jpeg", "gif", "bmp"));
+        fileChooser.setDialogTitle("选择要转换的图片文件");
+
+        if (fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+            imageResizePath = fileChooser.getSelectedFile().getAbsolutePath();
+            JLabel sourceLabel = registry.getComponent(UIComponentRegistry.IMAGE_RESIZE_SOURCE_LABEL);
+            sourceLabel.setText("已选择: " + fileChooser.getSelectedFile().getName());
+            sourceLabel.setForeground(Color.BLACK);
+
+            // 同时更新隐藏的路径标签
+            JLabel pathLabel = registry.getComponent("imageResizeSelectedPath");
+            if (pathLabel != null) {
+                pathLabel.setText(imageResizePath);
+            }
+
+            logManager.log("已选择图片文件: " + imageResizePath);
+        }
+    }
+
+    /**
+     * 处理图片尺寸转换的粘贴图片事件
+     * @param parent 父组件，用于对话框
+     */
+    public void handlePasteImageForResize(Component parent) {
+        Image image = clipboardManager.pasteImage();
+        if (image != null) {
+            String imageData = clipboardManager.convertImageToBase64(image);
+            if (imageData != null) {
+                imageResizePath = imageData; // 存储Base64数据
+                JLabel sourceLabel = registry.getComponent(UIComponentRegistry.IMAGE_RESIZE_SOURCE_LABEL);
+                sourceLabel.setText("已粘贴图片（Base64）");
+                sourceLabel.setForeground(Color.BLUE);
+
+                // 同时更新隐藏的路径标签
+                JLabel pathLabel = registry.getComponent("imageResizeSelectedPath");
+                if (pathLabel != null) {
+                    pathLabel.setText(imageResizePath);
+                }
+
+                logManager.log("已从剪贴板粘贴图片");
+            } else {
+                JOptionPane.showMessageDialog(parent, "图片转换失败", "错误", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            String text = clipboardManager.pasteText();
+            if (text != null && imageFileManager.isImageFile(text)) {
+                File file = new File(text);
+                if (file.exists()) {
+                    imageResizePath = text;
+                    JLabel sourceLabel = registry.getComponent(UIComponentRegistry.IMAGE_RESIZE_SOURCE_LABEL);
+                    sourceLabel.setText("已选择: " + file.getName());
+                    sourceLabel.setForeground(Color.BLACK);
+
+                    // 同时更新隐藏的路径标签
+                    JLabel pathLabel = registry.getComponent("imageResizeSelectedPath");
+                    if (pathLabel != null) {
+                        pathLabel.setText(imageResizePath);
+                    }
+
+                    logManager.log("已从剪贴板选择图片文件: " + imageResizePath);
+                } else {
+                    JOptionPane.showMessageDialog(parent, "文件不存在: " + text, "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(parent, "剪贴板中没有图片或有效的图片路径", "提示", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    /**
+     * 处理图片压缩的选择图片事件
+     * @param parent 父组件，用于对话框
+     */
+    public void handleSelectImageForCompress(Component parent) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "图片文件", "png", "jpg", "jpeg", "gif", "bmp"));
+        fileChooser.setDialogTitle("选择要压缩的图片文件");
+
+        if (fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+            imageCompressPath = fileChooser.getSelectedFile().getAbsolutePath();
+            JLabel sourceLabel = registry.getComponent(UIComponentRegistry.IMAGE_COMPRESS_SOURCE_LABEL);
+            sourceLabel.setText("已选择: " + fileChooser.getSelectedFile().getName());
+            sourceLabel.setForeground(Color.BLACK);
+
+            // 同时更新隐藏的路径标签
+            JLabel pathLabel = registry.getComponent("imageCompressSelectedPath");
+            if (pathLabel != null) {
+                pathLabel.setText(imageCompressPath);
+            }
+
+            logManager.log("已选择图片文件: " + imageCompressPath);
+        }
+    }
+
+    /**
+     * 处理图片压缩的粘贴图片事件
+     * @param parent 父组件，用于对话框
+     */
+    public void handlePasteImageForCompress(Component parent) {
+        Image image = clipboardManager.pasteImage();
+        if (image != null) {
+            String imageData = clipboardManager.convertImageToBase64(image);
+            if (imageData != null) {
+                imageCompressPath = imageData; // 存储Base64数据
+                JLabel sourceLabel = registry.getComponent(UIComponentRegistry.IMAGE_COMPRESS_SOURCE_LABEL);
+                sourceLabel.setText("已粘贴图片（Base64）");
+                sourceLabel.setForeground(Color.BLUE);
+
+                // 同时更新隐藏的路径标签
+                JLabel pathLabel = registry.getComponent("imageCompressSelectedPath");
+                if (pathLabel != null) {
+                    pathLabel.setText(imageCompressPath);
+                }
+
+                logManager.log("已从剪贴板粘贴图片");
+            } else {
+                JOptionPane.showMessageDialog(parent, "图片转换失败", "错误", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            String text = clipboardManager.pasteText();
+            if (text != null && imageFileManager.isImageFile(text)) {
+                File file = new File(text);
+                if (file.exists()) {
+                    imageCompressPath = text;
+                    JLabel sourceLabel = registry.getComponent(UIComponentRegistry.IMAGE_COMPRESS_SOURCE_LABEL);
+                    sourceLabel.setText("已选择: " + file.getName());
+                    sourceLabel.setForeground(Color.BLACK);
+
+                    // 同时更新隐藏的路径标签
+                    JLabel pathLabel = registry.getComponent("imageCompressSelectedPath");
+                    if (pathLabel != null) {
+                        pathLabel.setText(imageCompressPath);
+                    }
+
+                    logManager.log("已从剪贴板选择图片文件: " + imageCompressPath);
+                } else {
+                    JOptionPane.showMessageDialog(parent, "文件不存在: " + text, "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(parent, "剪贴板中没有图片或有效的图片路径", "提示", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    /**
      * 处理保存图片事件
      * @param parent 父组件，用于对话框
      */
     public void handleSaveImage(Component parent) {
-        Image image = imageDisplayManager.getCurrentImage();
-        if (image == null) {
+        String imageData = imageDisplayManager.getCurrentImageData();
+
+        if (imageData == null) {
             JOptionPane.showMessageDialog(parent, "没有可保存的图片", "提示", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        imageFileManager.saveImageToFile(parent, image, "qrcode.png", new ImageFileManager.LogCallback() {
+        // 获取图片格式
+        String imageFormat = imageDisplayManager.getCurrentImageFormat();
+        if (imageFormat == null) {
+            imageFormat = "png";
+        }
+
+        // 根据当前操作确定默认文件名
+        String defaultFileName = getDefaultImageFileName(selectedOperation);
+
+        // 使用新的保存方法（直接从 data URL 保存，保留原始尺寸）
+        imageFileManager.saveImageFromDataURL(parent, imageData, defaultFileName, imageFormat, new ImageFileManager.LogCallback() {
             @Override
             public void onLog(String message) {
                 logManager.log(message);
@@ -454,6 +649,69 @@ public class EventHandler {
                 logManager.logError(message, e);
             }
         });
+    }
+
+    /**
+     * 根据操作类型获取默认图片文件名（不含扩展名）
+     * @param operationName 操作名称
+     * @return 默认文件名（不带扩展名）
+     */
+    private String getDefaultImageFileName(String operationName) {
+        switch (operationName) {
+            case "生成二维码":
+                return "qrcode";
+            case "生成空白图片":
+                return "blank_image";
+            case "图片尺寸转换":
+                return "resized_image";
+            case "图片压缩":
+                return "compressed_image";
+            case "图片转Base编码":
+                return "image";
+            default:
+                return "image";
+        }
+    }
+
+    /**
+     * 根据操作类型和用户配置确定文件扩展名
+     * @param operationName 操作名称
+     * @param baseFileName 基础文件名
+     * @return 完整文件名（带扩展名）
+     */
+    private String determineFileExtension(String operationName, String baseFileName) {
+        String extension = ".png"; // 默认扩展名
+
+        switch (operationName) {
+            case "图片压缩":
+                // 检查用户选择的压缩格式
+                JRadioButton jpegRadio = registry.getComponent(UIComponentRegistry.IMAGE_COMPRESS_FORMAT_JPEG_RADIO);
+                JRadioButton pngRadio = registry.getComponent(UIComponentRegistry.IMAGE_COMPRESS_FORMAT_PNG_RADIO);
+                if (jpegRadio != null && jpegRadio.isSelected()) {
+                    extension = ".jpg";
+                } else if (pngRadio != null && pngRadio.isSelected()) {
+                    extension = ".png";
+                }
+                break;
+
+            case "生成空白图片":
+                // 检查用户选择的输出格式
+                JRadioButton blankPngRadio = registry.getComponent(UIComponentRegistry.BLANK_IMAGE_FORMAT_PNG_RADIO);
+                JRadioButton blankJpegRadio = registry.getComponent(UIComponentRegistry.BLANK_IMAGE_FORMAT_JPEG_RADIO);
+                if (blankJpegRadio != null && blankJpegRadio.isSelected()) {
+                    extension = ".jpg";
+                } else if (blankPngRadio != null && blankPngRadio.isSelected()) {
+                    extension = ".png";
+                }
+                break;
+
+            default:
+                // 其他操作默认使用png
+                extension = ".png";
+                break;
+        }
+
+        return baseFileName + extension;
     }
 
     /**

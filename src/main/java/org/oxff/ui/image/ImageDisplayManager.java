@@ -12,6 +12,9 @@ public class ImageDisplayManager {
     private final JLabel imageDisplayLabel;
     private final CardLayout outputCardLayout;
     private final JPanel outputCardsPanel;
+    private String currentImageFormat; // 当前图片格式 (jpeg/png)
+    private String originalImageData;  // 原始图片 data URL
+    private Image originalImage;       // 原始图片对象（未缩放）
 
     public ImageDisplayManager(JLabel imageDisplayLabel, CardLayout outputCardLayout, JPanel outputCardsPanel) {
         this.imageDisplayLabel = imageDisplayLabel;
@@ -24,10 +27,22 @@ public class ImageDisplayManager {
      * @param imageData Base64编码的图片数据
      */
     public void displayImage(String imageData) {
+        // 保存原始 data URL
+        this.originalImageData = imageData;
+
         // 切换到图片显示
         outputCardLayout.show(outputCardsPanel, "IMAGE");
 
         try {
+            // 从 data URL 提取格式信息
+            if (imageData.startsWith("data:image/")) {
+                int mimeEnd = imageData.indexOf(';');
+                if (mimeEnd > 11) { // "data:image/".length()
+                    String mime = imageData.substring(11, mimeEnd); // "jpeg" or "png"
+                    currentImageFormat = mime;
+                }
+            }
+
             // 解析data URL，提取Base64数据
             String base64Data = imageData.substring(imageData.indexOf(",") + 1);
             byte[] imageBytes = Base64.getDecoder().decode(base64Data);
@@ -35,8 +50,11 @@ public class ImageDisplayManager {
             // 创建图片图标
             ImageIcon icon = new ImageIcon(imageBytes);
 
-            // 如果图片太大，进行缩放
+            // 保存原始图片（在缩放之前）
             Image image = icon.getImage();
+            this.originalImage = image;
+
+            // 如果图片太大，进行缩放
             int originalWidth = image.getWidth(null);
             int originalHeight = image.getHeight(null);
 
@@ -72,18 +90,33 @@ public class ImageDisplayManager {
     public void clearImage() {
         imageDisplayLabel.setIcon(null);
         imageDisplayLabel.setText("");
+        currentImageFormat = null;
+        originalImageData = null;
+        originalImage = null;
     }
 
     /**
-     * 获取当前显示的图片
-     * @return 当前显示的图片，如果没有图片则返回 null
+     * 获取当前显示的图片（原始尺寸，未缩放）
+     * @return 原始图片，如果没有图片则返回 null
      */
     public Image getCurrentImage() {
-        if (imageDisplayLabel.getIcon() instanceof ImageIcon) {
-            ImageIcon icon = (ImageIcon) imageDisplayLabel.getIcon();
-            return icon.getImage();
-        }
-        return null;
+        return originalImage;
+    }
+
+    /**
+     * 获取原始图片数据（data URL格式）
+     * @return 原始的 Base64 data URL，如果没有图片则返回 null
+     */
+    public String getCurrentImageData() {
+        return originalImageData;
+    }
+
+    /**
+     * 获取当前图片格式
+     * @return 图片格式 ("jpeg", "png" 等)，如果没有图片则返回 null
+     */
+    public String getCurrentImageFormat() {
+        return currentImageFormat;
     }
 
     /**

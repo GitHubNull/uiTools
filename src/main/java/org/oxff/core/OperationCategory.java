@@ -10,7 +10,8 @@ public enum OperationCategory {
     AUTOMATION("自动化操作"),
     QRCODE("二维码"),
     TIMESTAMP("时间戳"),
-    GENERATOR("生成工具");
+    GENERATOR("生成工具"),
+    IMAGE_TOOLS("图像工具");
 
     private final String displayName;
 

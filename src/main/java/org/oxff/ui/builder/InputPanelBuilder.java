@@ -33,6 +33,14 @@ public class InputPanelBuilder {
         public JPanel getCurrentTimeConfigPanel;
         public JPanel timestampToDatetimeConfigPanel;
         public JPanel datetimeToTimestampConfigPanel;
+
+        // 身份证配置面板
+        public JPanel idCardGenerateConfigPanel;
+
+        // 图片工具配置面板
+        public JPanel blankImageConfigPanel;
+        public JPanel imageResizeConfigPanel;
+        public JPanel imageCompressConfigPanel;
     }
 
     /**
@@ -60,6 +68,14 @@ public class InputPanelBuilder {
         result.getCurrentTimeConfigPanel = configResult.getCurrentTimeConfigPanel;
         result.timestampToDatetimeConfigPanel = configResult.timestampToDatetimeConfigPanel;
         result.datetimeToTimestampConfigPanel = configResult.datetimeToTimestampConfigPanel;
+
+        // 添加身份证配置面板
+        result.idCardGenerateConfigPanel = configResult.idCardGenerateConfigPanel;
+
+        // 添加图片工具配置面板
+        result.blankImageConfigPanel = configResult.blankImageConfigPanel;
+        result.imageResizeConfigPanel = configResult.imageResizeConfigPanel;
+        result.imageCompressConfigPanel = configResult.imageCompressConfigPanel;
 
         return result;
     }

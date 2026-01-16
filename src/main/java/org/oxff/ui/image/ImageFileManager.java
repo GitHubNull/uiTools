@@ -3,6 +3,7 @@ package org.oxff.ui.image;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
@@ -19,28 +20,41 @@ public class ImageFileManager {
      * @param parent 父组件，用于对话框定位
      * @param image 要保存的图片
      * @param defaultName 默认文件名
+     * @param format 图片格式 ("jpeg", "png" 等)
      * @param logCallback 日志回调，用于记录操作结果
      */
-    public void saveImageToFile(Component parent, Image image, String defaultName, LogCallback logCallback) {
+    public void saveImageToFile(Component parent, Image image, String defaultName, String format, LogCallback logCallback) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setSelectedFile(new File(defaultName));
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PNG图片", "png"));
+
+        // 根据格式设置文件过滤器
+        String extension = ".png";
+        String formatName = "PNG";
+        String filterName = "PNG图片";
+
+        if ("jpeg".equalsIgnoreCase(format) || "jpg".equalsIgnoreCase(format)) {
+            extension = ".jpg";
+            formatName = "JPEG";
+            filterName = "JPEG图片";
+        }
+
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(filterName, formatName.toLowerCase()));
 
         if (fileChooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
             try {
                 String fileName = fileChooser.getSelectedFile().getAbsolutePath();
-                if (!fileName.toLowerCase().endsWith(".png")) {
-                    fileName += ".png";
+                if (!fileName.toLowerCase().endsWith(extension)) {
+                    fileName += extension;
                 }
 
                 // 创建BufferedImage并保存
                 BufferedImage bufferedImage = new BufferedImage(
-                    image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+                    image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB);
                 Graphics2D g2d = bufferedImage.createGraphics();
                 g2d.drawImage(image, 0, 0, null);
                 g2d.dispose();
 
-                ImageIO.write(bufferedImage, "PNG", new File(fileName));
+                ImageIO.write(bufferedImage, formatName, new File(fileName));
                 logCallback.onLog("图片已保存到: " + fileName);
                 JOptionPane.showMessageDialog(parent, "图片保存成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
 
@@ -49,6 +63,17 @@ public class ImageFileManager {
                 JOptionPane.showMessageDialog(parent, "保存图片失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    /**
+     * 保存图片到文件（兼容旧版本，默认PNG格式）
+     * @param parent 父组件，用于对话框定位
+     * @param image 要保存的图片
+     * @param defaultName 默认文件名
+     * @param logCallback 日志回调，用于记录操作结果
+     */
+    public void saveImageToFile(Component parent, Image image, String defaultName, LogCallback logCallback) {
+        saveImageToFile(parent, image, defaultName, "png", logCallback);
     }
 
     /**
@@ -104,6 +129,30 @@ public class ImageFileManager {
             return ImageIO.read(new java.io.ByteArrayInputStream(imageBytes));
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * 从 data URL 保存图片到文件
+     * @param parent 父组件
+     * @param dataURL Base64 data URL 格式的图片数据
+     * @param defaultName 默认文件名
+     * @param format 图片格式
+     * @param logCallback 日志回调
+     */
+    public void saveImageFromDataURL(Component parent, String dataURL, String defaultName, String format, LogCallback logCallback) {
+        try {
+            // 从 data URL 解码图片
+            String base64Data = dataURL.substring(dataURL.indexOf(",") + 1);
+            byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+            Image image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+
+            // 调用现有的保存方法
+            saveImageToFile(parent, image, defaultName, format, logCallback);
+
+        } catch (Exception e) {
+            logCallback.onError("保存图片失败", e);
+            JOptionPane.showMessageDialog(parent, "保存图片失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
     }
 

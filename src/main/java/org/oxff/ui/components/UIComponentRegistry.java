@@ -101,6 +101,44 @@ public class UIComponentRegistry {
     public static final String TO_TIMESTAMP_PAD_WITH_ZERO_CHECK_BOX = "toTimestampPadWithZeroCheckBox";
     public static final String DATETIME_TO_TIMESTAMP_INPUT_FIELD = "datetimeToTimestampInputField";
 
+    // 身份证配置相关组件
+    public static final String ID_CARD_PROVINCE_COMBO_BOX = "idCardProvinceComboBox";
+    public static final String ID_CARD_CITY_COMBO_BOX = "idCardCityComboBox";
+    public static final String ID_CARD_AGE_SPINNER = "idCardAgeSpinner";
+    public static final String ID_CARD_BIRTHDATE_FIELD = "idCardBirthDateField";
+    public static final String ID_CARD_GENDER_RANDOM_RADIO = "idCardGenderRandomRadio";
+    public static final String ID_CARD_GENDER_MALE_RADIO = "idCardGenderMaleRadio";
+    public static final String ID_CARD_GENDER_FEMALE_RADIO = "idCardGenderFemaleRadio";
+    public static final String ID_CARD_COUNT_SPINNER = "idCardCountSpinner";
+    public static final String ID_CARD_AGE_RADIO = "idCardAgeRadio";
+    public static final String ID_CARD_BIRTHDATE_RADIO = "idCardBirthDateRadio";
+
+    // 图片工具配置相关组件
+    public static final String BLANK_IMAGE_SIZE_SPEC_COMBO = "blankImageSizeSpecCombo";
+    public static final String BLANK_IMAGE_WIDTH_SPINNER = "blankImageWidthSpinner";
+    public static final String BLANK_IMAGE_HEIGHT_SPINNER = "blankImageHeightSpinner";
+    public static final String BLANK_IMAGE_BG_COLOR_BUTTON = "blankImageBgColorButton";
+    public static final String BLANK_IMAGE_BG_COLOR_PREVIEW = "blankImageBgColorPreview";
+    public static final String BLANK_IMAGE_FORMAT_PNG_RADIO = "blankImageFormatPngRadio";
+    public static final String BLANK_IMAGE_FORMAT_JPEG_RADIO = "blankImageFormatJpegRadio";
+
+    public static final String IMAGE_RESIZE_SOURCE_LABEL = "imageResizeSourceLabel";
+    public static final String IMAGE_RESIZE_SELECT_BUTTON = "imageResizeSelectButton";
+    public static final String IMAGE_RESIZE_PASTE_BUTTON = "imageResizePasteButton";
+    public static final String IMAGE_RESIZE_SIZE_SPEC_COMBO = "imageResizeSizeSpecCombo";
+    public static final String IMAGE_RESIZE_WIDTH_SPINNER = "imageResizeWidthSpinner";
+    public static final String IMAGE_RESIZE_HEIGHT_SPINNER = "imageResizeHeightSpinner";
+    public static final String IMAGE_RESIZE_MAINTAIN_RATIO_CHECK = "imageResizeMaintainRatioCheck";
+
+    public static final String IMAGE_COMPRESS_SOURCE_LABEL = "imageCompressSourceLabel";
+    public static final String IMAGE_COMPRESS_SELECT_BUTTON = "imageCompressSelectButton";
+    public static final String IMAGE_COMPRESS_PASTE_BUTTON = "imageCompressPasteButton";
+    public static final String IMAGE_COMPRESS_FORMAT_JPEG_RADIO = "imageCompressFormatJpegRadio";
+    public static final String IMAGE_COMPRESS_FORMAT_PNG_RADIO = "imageCompressFormatPngRadio";
+    public static final String IMAGE_COMPRESS_LEVEL_SLIDER = "imageCompressLevelSlider";
+    public static final String IMAGE_COMPRESS_LEVEL_LABEL = "imageCompressLevelLabel";
+    public static final String IMAGE_COMPRESS_SHOW_COMPARISON_CHECK = "imageCompressShowComparisonCheck";
+
     /**
      * 注册组件
      * @param name 组件名称

@@ -26,6 +26,11 @@ import org.oxff.operation.timestamp.GetCurrentTimeOperation;
 import org.oxff.operation.timestamp.TimestampToDatetimeOperation;
 import org.oxff.operation.timestamp.DatetimeToTimestampOperation;
 import org.oxff.operation.generator.RandomPasswordOperation;
+import org.oxff.operation.generator.idcard.IdCardGenerateOperation;
+import org.oxff.operation.generator.idcard.IdCardValidateOperation;
+import org.oxff.operation.imagetools.CreateBlankImageOperation;
+import org.oxff.operation.imagetools.ImageResizeOperation;
+import org.oxff.operation.imagetools.ImageCompressOperation;
 
 import java.util.*;
 
@@ -67,7 +72,14 @@ public class OperationFactory {
             new JwtDecodeOperation(),
             // 图片和生成工具操作
             new ImageToBaseOperation(),
-            new RandomPasswordOperation()
+            new RandomPasswordOperation(),
+            // 身份证操作
+            new IdCardGenerateOperation(),
+            new IdCardValidateOperation(),
+            // 图像工具操作
+            new CreateBlankImageOperation(),
+            new ImageResizeOperation(),
+            new ImageCompressOperation()
         };
         
         // 按名称映射操作

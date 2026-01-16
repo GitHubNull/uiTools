@@ -73,11 +73,11 @@ public class UIStateManager {
 
     /**
      * 确定要显示的输入面板类型
+     * 注意：检查顺序很重要，具体的配置面板要放在通用面板之前
      */
     private String determineInputPanelType(String operationName) {
-        if (validator.requiresImageInput(operationName)) {
-            return "IMAGE";
-        } else if (validator.requiresGetCurrentTimeConfig(operationName)) {
+        // 首先检查需要特定配置面板的操作
+        if (validator.requiresGetCurrentTimeConfig(operationName)) {
             return "GET_CURRENT_TIME";
         } else if (validator.requiresTimestampToDatetimeConfig(operationName)) {
             return "TIMESTAMP_TO_DATETIME";
@@ -87,8 +87,19 @@ public class UIStateManager {
             return "BASE_ENCODING";
         } else if (validator.requiresPasswordGeneratorConfig(operationName)) {
             return "PASSWORD_GENERATOR";
+        } else if (validator.requiresIdCardGenerateConfig(operationName)) {
+            return "ID_CARD_GENERATE";
+        } else if (validator.requiresCreateBlankImageConfig(operationName)) {
+            return "CREATE_BLANK_IMAGE";
+        } else if (validator.requiresImageResizeConfig(operationName)) {
+            return "IMAGE_RESIZE";
+        } else if (validator.requiresImageCompressConfig(operationName)) {
+            return "IMAGE_COMPRESS";
         } else if (validator.isAutomationOperation(operationName)) {
             return "AUTOMATION";
+        } else if (validator.requiresImageInput(operationName)) {
+            // 二维码解析等只需要图片输入的操作
+            return "IMAGE";
         } else {
             return "TEXT";
         }

@@ -297,6 +297,11 @@ public class MainWindow extends JFrame {
         inputCardsContainer.add(getCurrentTimeConfigPanel, "GET_CURRENT_TIME");
         inputCardsContainer.add(timestampToDatetimeConfigPanel, "TIMESTAMP_TO_DATETIME");
         inputCardsContainer.add(datetimeToTimestampConfigPanel, "DATETIME_TO_TIMESTAMP");
+        // 新增面板
+        inputCardsContainer.add(inputResult.idCardGenerateConfigPanel, "ID_CARD_GENERATE");
+        inputCardsContainer.add(inputResult.blankImageConfigPanel, "CREATE_BLANK_IMAGE");
+        inputCardsContainer.add(inputResult.imageResizeConfigPanel, "IMAGE_RESIZE");
+        inputCardsContainer.add(inputResult.imageCompressConfigPanel, "IMAGE_COMPRESS");
 
         // 注册到注册表
         registry.registerComponent(UIComponentRegistry.INPUT_CARDS_CONTAINER, inputCardsContainer);
@@ -402,6 +407,26 @@ public class MainWindow extends JFrame {
         JButton selectFileButton = registry.getComponent(UIComponentRegistry.SELECT_FILE_BUTTON);
         if (selectFileButton != null) {
             selectFileButton.addActionListener(e -> eventHandler.handleSelectFileForBaseEncoding(this));
+        }
+
+        // 图片尺寸转换按钮事件
+        JButton imageResizeSelectButton = registry.getComponent(UIComponentRegistry.IMAGE_RESIZE_SELECT_BUTTON);
+        JButton imageResizePasteButton = registry.getComponent(UIComponentRegistry.IMAGE_RESIZE_PASTE_BUTTON);
+        if (imageResizeSelectButton != null) {
+            imageResizeSelectButton.addActionListener(e -> eventHandler.handleSelectImageForResize(this));
+        }
+        if (imageResizePasteButton != null) {
+            imageResizePasteButton.addActionListener(e -> eventHandler.handlePasteImageForResize(this));
+        }
+
+        // 图片压缩按钮事件
+        JButton imageCompressSelectButton = registry.getComponent(UIComponentRegistry.IMAGE_COMPRESS_SELECT_BUTTON);
+        JButton imageCompressPasteButton = registry.getComponent(UIComponentRegistry.IMAGE_COMPRESS_PASTE_BUTTON);
+        if (imageCompressSelectButton != null) {
+            imageCompressSelectButton.addActionListener(e -> eventHandler.handleSelectImageForCompress(this));
+        }
+        if (imageCompressPasteButton != null) {
+            imageCompressPasteButton.addActionListener(e -> eventHandler.handlePasteImageForCompress(this));
         }
 
         // 复制输入按钮事件

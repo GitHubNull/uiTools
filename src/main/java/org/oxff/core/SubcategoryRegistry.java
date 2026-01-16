@@ -24,6 +24,9 @@ public class SubcategoryRegistry {
         register(new Subcategory("format", "时间戳格式化"));
         register(new Subcategory("utc", "UTC时间"));
 
+        // 身份证子分类
+        register(new Subcategory("idcard", "身份证"));
+
         // 其他分类可以只有一个默认子分类
         register(new Subcategory("default", "默认"));
     }

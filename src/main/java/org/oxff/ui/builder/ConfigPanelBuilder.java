@@ -30,6 +30,14 @@ public class ConfigPanelBuilder {
         public JPanel timestampToDatetimeConfigPanel;
         public JPanel datetimeToTimestampConfigPanel;
 
+        // 身份证配置面板
+        public JPanel idCardGenerateConfigPanel;
+
+        // 图片工具配置面板
+        public JPanel blankImageConfigPanel;
+        public JPanel imageResizeConfigPanel;
+        public JPanel imageCompressConfigPanel;
+
         // 自动化配置组件
         public JSpinner delaySecondsSpinner;
         public JSpinner charIntervalMsSpinner;
@@ -79,6 +87,14 @@ public class ConfigPanelBuilder {
         result.getCurrentTimeConfigPanel = timestampResult.getCurrentTimeConfigPanel;
         result.timestampToDatetimeConfigPanel = timestampResult.timestampToDatetimeConfigPanel;
         result.datetimeToTimestampConfigPanel = timestampResult.datetimeToTimestampConfigPanel;
+
+        // 构建身份证配置面板
+        result.idCardGenerateConfigPanel = IdCardConfigPanelBuilder.createIdCardGenerateConfigPanel(registry);
+
+        // 构建图片工具配置面板
+        result.blankImageConfigPanel = ImageToolsConfigPanelBuilder.createBlankImageConfigPanel(registry);
+        result.imageResizeConfigPanel = ImageToolsConfigPanelBuilder.createImageResizeConfigPanel(registry);
+        result.imageCompressConfigPanel = ImageToolsConfigPanelBuilder.createImageCompressConfigPanel(registry);
 
         return result;
     }

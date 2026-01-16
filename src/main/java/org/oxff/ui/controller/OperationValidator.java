@@ -50,7 +50,7 @@ public class OperationValidator {
     }
 
     /**
-     * 检查操作是否需要图片输入 (二维码解析)
+     * 检查操作是否需要图片输入 (二维码解析、图片尺寸转换、图片压缩)
      * @param operationName 操作名称
      * @return true 如果操作需要图片输入，否则返回 false
      */
@@ -64,8 +64,11 @@ public class OperationValidator {
             return false;
         }
 
-        // 检查操作是否是二维码解析操作
-        return "QRCodeDecodeOperation".equals(operation.getClass().getSimpleName());
+        // 检查操作是否是需要图片输入的操作
+        String className = operation.getClass().getSimpleName();
+        return "QRCodeDecodeOperation".equals(className)
+            || "ImageResizeOperation".equals(className)
+            || "ImageCompressOperation".equals(className);
     }
 
     /**
@@ -78,8 +81,12 @@ public class OperationValidator {
             return false;
         }
 
-        // "获取当前时间" 和 "生成随机密码" 可以在无输入时执行
-        return "获取当前时间".equals(operationName) || "生成随机密码".equals(operationName);
+        // "获取当前时间"、"生成随机密码"、"生成身份证号码"、"生成空白图片" 可以在无输入时执行
+        // 注意：图片尺寸转换和图片压缩通过 requiresImageInput 处理，不在无输入时执行
+        return "获取当前时间".equals(operationName)
+            || "生成随机密码".equals(operationName)
+            || "生成身份证号码".equals(operationName)
+            || "生成空白图片".equals(operationName);
     }
 
     /**
@@ -158,6 +165,58 @@ public class OperationValidator {
     }
 
     /**
+     * 检查操作是否需要身份证生成配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要身份证生成配置面板，否则返回 false
+     */
+    public boolean requiresIdCardGenerateConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        return "生成身份证号码".equals(operationName);
+    }
+
+    /**
+     * 检查操作是否需要生成空白图片配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要生成空白图片配置面板，否则返回 false
+     */
+    public boolean requiresCreateBlankImageConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        return "生成空白图片".equals(operationName);
+    }
+
+    /**
+     * 检查操作是否需要图片尺寸转换配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要图片尺寸转换配置面板，否则返回 false
+     */
+    public boolean requiresImageResizeConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        return "图片尺寸转换".equals(operationName);
+    }
+
+    /**
+     * 检查操作是否需要图片压缩配置面板
+     * @param operationName 操作名称
+     * @return true 如果操作需要图片压缩配置面板，否则返回 false
+     */
+    public boolean requiresImageCompressConfig(String operationName) {
+        if (operationName == null || operationName.isEmpty()) {
+            return false;
+        }
+
+        return "图片压缩".equals(operationName);
+    }
+
+    /**
      * 检查操作是否需要文本输入按钮（粘贴、复制、清空等）
      * @param operationName 操作名称
      * @return true 如果操作需要文本输入按钮，否则返回 false
@@ -174,6 +233,10 @@ public class OperationValidator {
             && !requiresDatetimeToTimestampConfig(operationName)
             && !requiresBaseEncodingConfig(operationName)
             && !requiresPasswordGeneratorConfig(operationName)
+            && !requiresIdCardGenerateConfig(operationName)
+            && !requiresCreateBlankImageConfig(operationName)
+            && !requiresImageResizeConfig(operationName)
+            && !requiresImageCompressConfig(operationName)
             && !isAutomationOperation(operationName);
     }
 
